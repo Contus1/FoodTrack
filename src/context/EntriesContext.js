@@ -67,17 +67,17 @@ export const EntriesProvider = ({ children }) => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('food-images')
         .upload(fileName, file);
 
       if (error) throw error;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data: urlData } = supabase.storage
         .from('food-images')
         .getPublicUrl(fileName);
 
-      return publicUrl;
+      return urlData.publicUrl;
     } catch (error) {
       console.error('Error uploading image:', error);
       return null;
