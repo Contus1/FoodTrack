@@ -99,12 +99,33 @@ export const EntriesProvider = ({ children }) => {
     }
   };
 
+  const deleteEntry = async (entryId) => {
+    if (!user) return { error: 'User not authenticated' };
+
+    try {
+      const { error } = await supabase
+        .from('entries')
+        .delete()
+        .eq('id', entryId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      
+      setEntries(prev => prev.filter(entry => entry.id !== entryId));
+      return { error: null };
+    } catch (error) {
+      console.error('Error deleting entry:', error);
+      return { error };
+    }
+  };
+
   const value = {
     entries,
     loading,
     fetchEntries,
     addEntry,
     uploadImage,
+    deleteEntry,
   };
 
   return (

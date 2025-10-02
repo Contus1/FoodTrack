@@ -1,7 +1,11 @@
 -- Food Diary Database Setup
 -- Run this in your Supabase SQL Editor
 
--- Create entries table for food entries
+-- Add location column to existing entries table (if it doesn't exist)
+ALTER TABLE public.entries 
+ADD COLUMN IF NOT EXISTS location TEXT;
+
+-- Create entries table for food entries (if it doesn't exist)
 CREATE TABLE IF NOT EXISTS public.entries (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -10,6 +14,7 @@ CREATE TABLE IF NOT EXISTS public.entries (
   tags TEXT[] DEFAULT '{}',
   notes TEXT,
   photo_url TEXT,
+  location TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -20,6 +25,12 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.entries ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist, then recreate them
+DROP POLICY IF EXISTS "Users can view their own entries" ON public.entries;
+DROP POLICY IF EXISTS "Users can insert their own entries" ON public.entries;
+DROP POLICY IF EXISTS "Users can update their own entries" ON public.entries;
+DROP POLICY IF EXISTS "Users can delete their own entries" ON public.entries;
 
 -- RLS Policies for entries table
 CREATE POLICY "Users can view their own entries" ON public.entries
@@ -33,6 +44,11 @@ CREATE POLICY "Users can update their own entries" ON public.entries
 
 CREATE POLICY "Users can delete their own entries" ON public.entries
   FOR DELETE USING (auth.uid() = user_id);
+
+-- Drop existing storage policies if they exist, then recreate them
+DROP POLICY IF EXISTS "Users can upload their own images" ON storage.objects;
+DROP POLICY IF EXISTS "Users can view their own images" ON storage.objects;
+DROP POLICY IF EXISTS "Public images can be viewed" ON storage.objects;
 
 -- Storage policies for food images
 CREATE POLICY "Users can upload their own images" ON storage.objects

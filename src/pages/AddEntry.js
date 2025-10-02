@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useEntries } from '../context/EntriesContext';
-import Header from '../components/Header';
-import StarRating from '../components/StarRating';
 import BottomNavigation from '../components/BottomNavigation';
+import StarRating from '../components/StarRating';
+import LocationAutocomplete from '../components/LocationAutocomplete';
 
 const AddEntry = () => {
   const navigate = useNavigate();
@@ -16,6 +16,7 @@ const AddEntry = () => {
     rating: 3,
     tags: [],
     notes: '',
+    location: '',
     photo_url: '',
   });
   const [selectedFile, setSelectedFile] = useState(null);
@@ -80,49 +81,83 @@ const AddEntry = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
-      <Header />
+    <div className="min-h-screen bg-white pb-16">
+      {/* Sophisticated Header */}
+      <div className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-gray-100 z-10">
+        <div className="max-w-4xl mx-auto px-6 py-6">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => navigate('/')}
+              className="w-11 h-11 flex items-center justify-center text-gray-600 hover:text-black hover:bg-gray-50 rounded-full transition-all duration-200"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+              </svg>
+            </button>
+            <div className="flex items-center space-x-4">
+              <div className="w-1 h-8 bg-black rounded-full"></div>
+              <h1 className="text-xl font-light tracking-wide text-black">
+                New Creation
+              </h1>
+            </div>
+            <div className="w-11"></div>
+          </div>
+        </div>
+      </div>
       
-      <main className="container mx-auto px-4 py-6 max-w-md">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Add New Entry</h1>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <main className="max-w-3xl mx-auto px-6 py-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
           {/* Photo Upload */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Photo
+          <div className="space-y-4">
+            <label className="block text-sm font-light text-gray-600 uppercase tracking-wider">
+              Visual Documentation
             </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+            <div className="relative group">
               {formData.photo_url ? (
-                <img
-                  src={formData.photo_url}
-                  alt="Preview"
-                  className="w-full h-48 object-cover rounded-lg mb-2"
-                />
+                <div className="relative">
+                  <img
+                    src={formData.photo_url}
+                    alt="Preview"
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 flex items-center justify-center rounded-lg">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      id="photo-upload"
+                    />
+                    <span className="opacity-0 group-hover:opacity-100 text-white font-medium text-sm transition-all duration-200">
+                      Change Photo
+                    </span>
+                  </div>
+                </div>
               ) : (
-                <div className="h-48 flex items-center justify-center">
-                  <p className="text-gray-500">No photo selected</p>
+                <div className="h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center group cursor-pointer hover:border-gray-400 transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    id="photo-upload-empty"
+                  />
+                  <div className="text-center">
+                    <svg className="w-10 h-10 text-gray-400 mx-auto mb-3 group-hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <p className="text-gray-500 group-hover:text-gray-700 transition-colors">
+                      Click to add photo
+                    </p>
+                  </div>
                 </div>
               )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-                id="photo-upload"
-              />
-              <label
-                htmlFor="photo-upload"
-                className="cursor-pointer bg-primary-500 text-white px-4 py-2 rounded-md hover:bg-primary-600 transition-colors"
-              >
-                {formData.photo_url ? 'Change Photo' : 'Add Photo'}
-              </label>
             </div>
           </div>
 
           {/* Title */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-gray-700">
               Dish Name
             </label>
             <input
@@ -130,25 +165,25 @@ const AddEntry = () => {
               required
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full text-lg font-medium text-black border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
               placeholder="What did you eat?"
             />
           </div>
 
           {/* Rating */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-gray-700">
               Rating
             </label>
             <StarRating
-              rating={formData.rating}
+              value={formData.rating}
               onRatingChange={(rating) => setFormData(prev => ({ ...prev, rating }))}
             />
           </div>
 
           {/* Tags */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-gray-700">
               Tags
             </label>
             <div className="flex flex-wrap gap-2">
@@ -157,10 +192,10 @@ const AddEntry = () => {
                   key={tag}
                   type="button"
                   onClick={() => handleTagToggle(tag)}
-                  className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                  className={`px-3 py-1 text-sm rounded-full transition-colors ${
                     formData.tags.includes(tag)
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      ? 'bg-black text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
                   {tag}
@@ -169,33 +204,46 @@ const AddEntry = () => {
             </div>
           </div>
 
+          {/* Location */}
+          <div className="space-y-4">
+            <label className="block text-sm font-light text-gray-600 uppercase tracking-wider">
+              Location
+            </label>
+            <LocationAutocomplete
+              value={formData.location}
+              onChange={(value) => setFormData(prev => ({ ...prev, location: value }))}
+              placeholder="Where did you enjoy this?"
+              className="w-full"
+            />
+          </div>
+
           {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Notes (Optional)
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-gray-700">
+              Notes
             </label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder="How was it? Any thoughts?"
+              className="w-full text-gray-700 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all resize-none"
+              placeholder="How was it? Any notes?"
             />
           </div>
 
-          {/* Submit Button */}
-          <div className="flex gap-3 pb-4">
+          {/* Submit Buttons */}
+          <div className="flex gap-3 pt-4">
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+              className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-3 bg-primary-500 text-white rounded-md hover:bg-primary-600 disabled:opacity-50 transition-colors"
+              className="flex-1 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
             >
               {loading ? 'Saving...' : 'Save Entry'}
             </button>

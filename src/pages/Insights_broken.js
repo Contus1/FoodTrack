@@ -48,43 +48,54 @@ const Insights = () => {
 
           // Identify cuisine tags
           const cuisines = ['thai', 'korean', 'italian', 'japanese', 'chinese', 'mexican', 'indian', 'french', 'american', 'mediterranean'];
-          cuisines.forEach(cuisine => {
-            if (lowerTag.includes(cuisine)) {
-              cuisineMap[cuisine] = (cuisineMap[cuisine] || 0) + 1;
-              
-              // Calculate cuisine ratings
-              if (!cuisineRatings[cuisine]) {
-                cuisineRatings[cuisine] = { total: 0, count: 0, avg: 0 };
-              }
-              cuisineRatings[cuisine].total += entry.rating;
-              cuisineRatings[cuisine].count++;
-              cuisineRatings[cuisine].avg = cuisineRatings[cuisine].total / cuisineRatings[cuisine].count;
+          if (cuisines.includes(lowerTag)) {
+            cuisineMap[lowerTag] = (cuisineMap[lowerTag] || 0) + 1;
+            
+            // Track cuisine ratings
+            if (!cuisineRatings[lowerTag]) {
+              cuisineRatings[lowerTag] = { total: 0, count: 0 };
             }
-          });
+            cuisineRatings[lowerTag].total += entry.rating;
+            cuisineRatings[lowerTag].count++;
+          }
         });
       }
     });
 
-    // Spider chart data (flavor profile)
+    // Calculate average ratings for cuisines
+    Object.keys(cuisineRatings).forEach(cuisine => {
+      cuisineRatings[cuisine].avg = cuisineRatings[cuisine].total / cuisineRatings[cuisine].count;
+    });
+
+    // Get top flavor tags (excluding cuisine names)
+    const flavorTags = ['spicy', 'creamy', 'noodles', 'cheese', 'seafood', 'bbq', 'sweet', 'savory', 'vegetarian', 'healthy'];
+    const flavorProfile = {};
+    flavorTags.forEach(flavor => {
+      if (tagFrequency[flavor]) {
+        flavorProfile[flavor] = tagFrequency[flavor];
+      }
+    });
+
+    // Create spider chart data for main flavors
     const spiderChartData = {
       'Spicy': tagFrequency['spicy'] || 0,
-      'Sweet': tagFrequency['sweet'] || 0,
       'Creamy': tagFrequency['creamy'] || 0,
       'Noodles': tagFrequency['noodles'] || 0,
       'Cheese': tagFrequency['cheese'] || 0,
       'Seafood': tagFrequency['seafood'] || 0,
+      'BBQ': tagFrequency['bbq'] || 0,
     };
 
     return {
       totalDishes,
-      avgRating,
+      avgRating: Math.round(avgRating * 10) / 10,
       cuisineMap,
       spiceProfile,
-      flavorProfile: tagFrequency,
+      flavorProfile,
       tagFrequency,
       cuisineRatings,
       spiderChartData,
-      entries
+      entries // Add entries for recommendations
     };
   }, [entries]);
 
@@ -96,26 +107,26 @@ const Insights = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
-        {/* Sophisticated Header */}
-        <div className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-gray-100 z-10">
-          <div className="max-w-4xl mx-auto px-6 py-6">
+        {/* Cool Header */}
+        <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-10">
+          <div className="max-w-4xl mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-1 h-8 bg-black rounded-full"></div>
-                <h1 className="text-xl font-light tracking-wide text-black">
-                  Analytics
+              <div className="flex items-center space-x-3">
+                <div className="w-1.5 h-6 bg-orange-400 rounded-full"></div>
+                <h1 className="text-xl font-semibold text-black">
+                  Food Insights
                 </h1>
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse"></div>
-                <span className="text-xs text-gray-400 font-light tracking-wider uppercase">Loading</span>
+              <div className="flex items-center space-x-2">
+                <div className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse"></div>
+                <span className="text-xs text-gray-500 font-medium">Analytics</span>
               </div>
             </div>
           </div>
         </div>
-        <div className="container mx-auto px-6 py-8 max-w-4xl">
+        <div className="container mx-auto px-4 py-6 max-w-md">
           <div className="flex justify-center py-8">
-            <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
         </div>
       </div>
@@ -125,11 +136,11 @@ const Insights = () => {
   if (insights.totalDishes === 0) {
     const emptySpiderData = {
       'Spicy': 0,
-      'Sweet': 0,
       'Creamy': 0,
       'Noodles': 0,
       'Cheese': 0,
       'Seafood': 0,
+      'BBQ': 0,
     };
 
     return (
@@ -334,6 +345,86 @@ const Insights = () => {
             </p>
           </div>
         )}
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-gray-500">
+                Each axis shows how often you enjoy different flavor categories
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Additional Flavor Details */}
+        {Object.keys(insights.flavorProfile).length > 0 && (
+          <div className="bg-white rounded-lg p-4 mb-6 shadow-sm">
+            <h3 className="font-semibold text-gray-900 mb-3">Flavor Breakdown</h3>
+            <div className="space-y-2">
+              {Object.entries(insights.flavorProfile)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 6)
+                .map(([flavor, count]) => {
+                  const percentage = (count / insights.totalDishes) * 100;
+                  return (
+                    <div key={flavor} className="flex items-center">
+                      <div className="w-20 text-sm capitalize text-gray-700">{flavor}</div>
+                      <div className="flex-1 mx-3">
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-primary-500 h-2 rounded-full transition-all duration-500"
+                            style={{ width: `${percentage}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                      <span className="text-sm text-gray-600">{count}</span>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        )}
+
+        {/* Food Preferences (Tags) */}
+        <div className="bg-white rounded-lg p-4 mb-6 shadow-sm">
+          <h3 className="font-semibold text-gray-900 mb-3">Your Food Preferences</h3>
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(insights.tagFrequency)
+              .sort(([,a], [,b]) => b - a)
+              .slice(0, 8)
+              .map(([tag, count]) => (
+                <span 
+                  key={tag}
+                  className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary-100 text-primary-700"
+                >
+                  #{tag} <span className="ml-1 font-medium">({count})</span>
+                </span>
+              ))}
+          </div>
+        </div>
+
+        {/* Cuisine Ratings */}
+        {Object.keys(insights.cuisineRatings).length > 0 && (
+          <div className="bg-white border border-gray-100 rounded-xl p-8">
+            <h3 className="text-lg font-light text-black mb-6">Cuisine Ratings</h3>
+            <div className="space-y-4">
+              {Object.entries(insights.cuisineRatings)
+                .sort(([,a], [,b]) => b.avg - a.avg)
+                .map(([cuisine, data]) => (
+                  <div key={cuisine} className="flex items-center space-x-4">
+                    <div className="w-20 text-sm capitalize text-black font-light">{cuisine}</div>
+                    <div className="flex-1">
+                      <div className="w-full bg-gray-100 rounded-full h-3">
+                        <div 
+                          className="bg-black h-3 rounded-full transition-all duration-700"
+                          style={{ width: `${(data.avg / 5) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                    <span className="text-sm text-gray-400 w-12 text-right font-light">{data.avg.toFixed(1)}</span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
 
         {/* Quick Recommendations Preview */}
         {insights.totalDishes >= 3 && (
@@ -356,7 +447,6 @@ const Insights = () => {
       <BottomNavigation />
     </div>
   );
-};
 
 // Quick Recommendations Component
 const QuickRecommendations = ({ insights, navigate }) => {

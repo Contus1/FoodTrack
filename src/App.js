@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import AddEntry from './pages/AddEntry';
 import Profile from './pages/Profile';
 import Insights from './pages/Insights';
+import RecommendationsPage from './pages/RecommendationsPage';
 import AuthPage from './pages/AuthPage';
 import SetupPage from './components/SetupPage';
 
@@ -26,10 +27,10 @@ const AppContent = () => {
   // Show loading spinner while checking auth
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="w-16 h-16 border-2 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-black font-light">Loading...</p>
         </div>
       </div>
     );
@@ -38,11 +39,12 @@ const AppContent = () => {
   return (
     <EntriesProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-white">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/add" element={<AddEntry />} />
             <Route path="/insights" element={<Insights />} />
+            <Route path="/recommendations" element={<RecommendationsPage />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/login" element={<AuthPage />} />
           </Routes>
