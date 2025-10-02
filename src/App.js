@@ -2,9 +2,11 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { EntriesProvider } from './context/EntriesContext';
+import { SocialProvider } from './context/SocialContext';
 import Home from './pages/Home';
 import AddEntry from './pages/AddEntry';
 import Profile from './pages/Profile';
+import UserProfile from './pages/UserProfile';
 import Insights from './pages/Insights';
 import RecommendationsPage from './pages/RecommendationsPage';
 import AuthPage from './pages/AuthPage';
@@ -37,25 +39,28 @@ const AppContent = () => {
   }
 
   return (
-    <EntriesProvider>
-      <Router>
-        <div className="min-h-screen bg-white">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/add" element={<AddEntry />} />
-            <Route path="/insights" element={<Insights />} />
-            <Route path="/recommendations" element={<RecommendationsPage />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/login" element={<AuthPage />} />
-          </Routes>
-        </div>
-      </Router>
-    </EntriesProvider>
+    <SocialProvider>
+      <EntriesProvider>
+        <Router>
+          <div className="min-h-screen bg-white">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/add" element={<AddEntry />} />
+              <Route path="/insights" element={<Insights />} />
+              <Route path="/recommendations" element={<RecommendationsPage />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/:userId" element={<UserProfile />} />
+              <Route path="/login" element={<AuthPage />} />
+            </Routes>
+          </div>
+        </Router>
+      </EntriesProvider>
+    </SocialProvider>
   );
 };
 
-function App() {
-  // Show setup page if Supabase is not configured
+const App = () => {
+  // Check if Supabase is configured
   if (!isSupabaseConfigured()) {
     return <SetupPage />;
   }
@@ -65,6 +70,6 @@ function App() {
       <AppContent />
     </AuthProvider>
   );
-}
+};
 
 export default App;

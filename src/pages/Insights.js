@@ -1,15 +1,138 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useEntries } from '../context/EntriesContext';
 import { useNavigate } from 'react-router-dom';
 import BottomNavigation from '../components/BottomNavigation';
 import SpiderChart from '../components/SpiderChart';
-import FoodRecommendationEngine from '../utils/recommendationEngine';
+import SimpleMap from '../components/SimpleMap';
+import FlavorJourneyMap from '../components/FlavorJourneyMap';
+import FoodDNAMatcher from '../components/FoodDNAMatcher';
+import CulinaryAchievements from '../components/CulinaryAchievements';
+import { FoodRecommendationEngine } from '../utils/recommendationEngine';
+
+// Component to properly use the FoodRecommendationEngine class
+const FoodRecommendations = ({ entries }) => {
+  const [recommendations, setRecommendations] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const generateRecommendations = () => {
+      try {
+        if (!entries || entries.length === 0) {
+          setRecommendations(null);
+          setLoading(false);
+          return;
+        }
+
+        const engine = new FoodRecommendationEngine();
+        const analysis = engine.analyzePreferences(entries);
+        const cuisineRecs = engine.recommendCuisines(analysis);
+        const dishRecs = engine.recommendDishes(analysis, cuisineRecs);
+        const tips = engine.generateTips(analysis);
+
+        setRecommendations({
+          analysis,
+          cuisines: cuisineRecs.slice(0, 3),
+          dishes: dishRecs,
+          tips
+        });
+        setLoading(false);
+      } catch (error) {
+        console.error('Error generating recommendations:', error);
+        setRecommendations(null);
+        setLoading(false);
+      }
+    };
+
+    generateRecommendations();
+  }, [entries]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="w-6 h-6 border border-gray-300 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!recommendations) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500 text-sm">
+          Add more food entries to get personalized recommendations!
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Cuisine Recommendations */}
+      <div>
+        <h4 className="text-sm font-medium text-gray-900 mb-3">🌍 Try These Cuisines</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {recommendations.cuisines.map((cuisine, index) => (
+            <div key={index} className="bg-gray-50 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h5 className="font-medium text-gray-900">{cuisine.name}</h5>
+                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                  {cuisine.score}% match
+                </span>
+              </div>
+              <div className="space-y-1">
+                {cuisine.reasons.map((reason, idx) => (
+                  <p key={idx} className="text-xs text-gray-600">• {reason}</p>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Dish Recommendations */}
+      {recommendations.dishes.length > 0 && (
+        <div>
+          <h4 className="text-sm font-medium text-gray-900 mb-3">🍽️ Recommended Dishes</h4>
+          <div className="space-y-3">
+            {recommendations.dishes.map((dish, index) => (
+              <div key={index} className="bg-gray-50 rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <h5 className="font-medium text-gray-900">{dish.name}</h5>
+                  <span className="text-xs text-gray-500">{dish.cuisine}</span>
+                </div>
+                <div className="mt-1">
+                  {dish.reasons.map((reason, idx) => (
+                    <p key={idx} className="text-xs text-gray-600">• {reason}</p>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tips */}
+      {recommendations.tips.length > 0 && (
+        <div>
+          <h4 className="text-sm font-medium text-gray-900 mb-3">💡 Personalized Tips</h4>
+          <div className="space-y-2">
+            {recommendations.tips.map((tip, index) => (
+              <div key={index} className="bg-blue-50 border border-blue-100 rounded-lg p-3">
+                <p className="text-sm text-blue-800">{tip}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const Insights = () => {
   const { user } = useAuth();
   const { entries, loading } = useEntries();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('social');
 
   // Calculate insights from entries
   const insights = useMemo(() => {
@@ -47,20 +170,19 @@ const Insights = () => {
           tagFrequency[lowerTag] = (tagFrequency[lowerTag] || 0) + 1;
 
           // Identify cuisine tags
-          const cuisines = ['thai', 'korean', 'italian', 'japanese', 'chinese', 'mexican', 'indian', 'french', 'american', 'mediterranean'];
-          cuisines.forEach(cuisine => {
-            if (lowerTag.includes(cuisine)) {
-              cuisineMap[cuisine] = (cuisineMap[cuisine] || 0) + 1;
-              
-              // Calculate cuisine ratings
-              if (!cuisineRatings[cuisine]) {
-                cuisineRatings[cuisine] = { total: 0, count: 0, avg: 0 };
-              }
-              cuisineRatings[cuisine].total += entry.rating;
-              cuisineRatings[cuisine].count++;
-              cuisineRatings[cuisine].avg = cuisineRatings[cuisine].total / cuisineRatings[cuisine].count;
+          const cuisineKeywords = ['italian', 'chinese', 'mexican', 'indian', 'japanese', 'french', 'thai', 'american'];
+          const cuisine = cuisineKeywords.find(keyword => lowerTag.includes(keyword));
+          
+          if (cuisine) {
+            cuisineMap[cuisine] = (cuisineMap[cuisine] || 0) + 1;
+            
+            if (!cuisineRatings[cuisine]) {
+              cuisineRatings[cuisine] = { total: 0, count: 0, avg: 0 };
             }
-          });
+            cuisineRatings[cuisine].total += entry.rating;
+            cuisineRatings[cuisine].count++;
+            cuisineRatings[cuisine].avg = cuisineRatings[cuisine].total / cuisineRatings[cuisine].count;
+          }
         });
       }
     });
@@ -95,296 +217,252 @@ const Insights = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white">
-        {/* Sophisticated Header */}
-        <div className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-gray-100 z-10">
-          <div className="max-w-4xl mx-auto px-6 py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-1 h-8 bg-black rounded-full"></div>
-                <h1 className="text-xl font-light tracking-wide text-black">
-                  Analytics
-                </h1>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse"></div>
-                <span className="text-xs text-gray-400 font-light tracking-wider uppercase">Loading</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="container mx-auto px-6 py-8 max-w-4xl">
-          <div className="flex justify-center py-8">
-            <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="w-6 h-6 border border-black border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
-  if (insights.totalDishes === 0) {
-    const emptySpiderData = {
-      'Spicy': 0,
-      'Sweet': 0,
-      'Creamy': 0,
-      'Noodles': 0,
-      'Cheese': 0,
-      'Seafood': 0,
-    };
-
-    return (
-      <div className="min-h-screen bg-white pb-16">
-        {/* Sophisticated Header */}
-        <div className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-gray-100 z-10">
-          <div className="max-w-4xl mx-auto px-6 py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-1 h-8 bg-black rounded-full"></div>
-                <h1 className="text-xl font-light tracking-wide text-black">
-                  Analytics
-                </h1>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-                <span className="text-xs text-gray-400 font-light tracking-wider uppercase">Insights</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="container mx-auto px-6 py-8 max-w-4xl">
-          <div className="text-center py-12">
-            <div className="text-5xl mb-6 opacity-20">📊</div>
-            <h2 className="text-xl font-light text-black mb-3">Your Culinary Journey Awaits</h2>
-            <p className="text-gray-500 mb-8 font-light">Add food entries to unlock your taste insights</p>
-            
-            {/* Preview of empty spider chart */}
-            <div className="bg-white border border-gray-100 rounded-xl p-8 mb-8 max-w-md mx-auto">
-              <h3 className="font-light text-black mb-6">Flavor Profile Preview</h3>
-              <SpiderChart data={emptySpiderData} size={180} />
-              <p className="text-xs text-gray-400 mt-4 font-light italic">This will reveal your taste patterns once you add entries</p>
-            </div>
-            
-            <button
-              onClick={() => navigate('/add')}
-              className="bg-black text-white px-8 py-3 rounded-lg font-light tracking-wide hover:bg-gray-800 transition-colors duration-200"
-            >
-              Begin Your Journey
-            </button>
-          </div>
-        </div>
-        <BottomNavigation />
-      </div>
-    );
-  }
+  const tabs = [
+    { id: 'social', label: 'Social Insights', icon: '👥' },
+    { id: 'classic', label: 'Classic Analytics', icon: '📊' },
+    { id: 'achievements', label: 'Achievements', icon: '🏆' }
+  ];
 
   return (
-    <div className="min-h-screen bg-white pb-16">
-      {/* Sophisticated Header */}
+    <div className="min-h-screen bg-gray-50 pb-16">
+      {/* Header */}
       <div className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-gray-100 z-10">
-        <div className="max-w-4xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-1 h-8 bg-black rounded-full"></div>
-              <h1 className="text-xl font-light tracking-wide text-black">
-                Analytics
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <div className="w-1 h-6 sm:h-8 bg-black rounded-full"></div>
+              <h1 className="text-lg sm:text-2xl font-light tracking-wide text-black">
+                Culinary Insights
               </h1>
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
-              <span className="text-xs text-gray-400 font-light tracking-wider uppercase">{insights.totalDishes} Entries</span>
-            </div>
+            <button
+              onClick={() => navigate('/')}
+              className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-black rounded-full hover:bg-gray-50"
+            >
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          {/* Tab Navigation */}
+          <div className="flex space-x-4 sm:space-x-8 overflow-x-auto">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative py-2 px-1 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? 'text-black border-b-2 border-black'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <span className="mr-1 sm:mr-2">{tab.icon}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
+              </button>
+            ))}
           </div>
         </div>
       </div>
-      
-      <main className="container mx-auto px-6 py-8 max-w-4xl">
-        <div className="space-y-8">
 
-        {/* Overview Stats */}
-        <div className="grid grid-cols-2 gap-6">
-          <div className="bg-white border border-gray-100 rounded-xl p-6 text-center">
-            <div className="text-4xl font-light text-black mb-2">{insights.totalDishes}</div>
-            <div className="text-sm text-gray-500 font-light tracking-wide uppercase">Creations</div>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+        {/* Social Insights Tab */}
+        {activeTab === 'social' && (
+          <div className="space-y-8">
+            <FlavorJourneyMap />
+            <FoodDNAMatcher />
           </div>
-          <div className="bg-white border border-gray-100 rounded-xl p-6 text-center">
-            <div className="text-4xl font-light text-black mb-2">{insights.avgRating.toFixed(1)}</div>
-            <div className="text-sm text-gray-500 font-light tracking-wide uppercase">Avg Rating</div>
-          </div>
-        </div>
+        )}
 
-        {/* Location Insights & Map */}
-        {(() => {
-          const locationStats = entries.reduce((acc, entry) => {
-            if (entry.location) {
-              acc[entry.location] = (acc[entry.location] || 0) + 1;
-            }
-            return acc;
-          }, {});
-          
-          const totalLocations = Object.keys(locationStats).length;
-          
-          return totalLocations > 0 ? (
-            <div className="bg-white border border-gray-100 rounded-xl p-8">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-light text-black">Culinary Geography</h3>
-                <span className="text-sm text-gray-400 font-light">{totalLocations} locations</span>
-              </div>
-              
-              {/* Map Placeholder */}
-              <div className="bg-gray-50 rounded-lg h-48 mb-6 flex items-center justify-center border border-gray-100">
-                <div className="text-center">
-                  <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        {/* Achievements Tab */}
+        {activeTab === 'achievements' && (
+          <div className="space-y-8">
+            <CulinaryAchievements />
+          </div>
+        )}
+
+        {/* Classic Analytics Tab */}
+        {activeTab === 'classic' && (
+          <div className="space-y-8">
+            {entries.length === 0 ? (
+              <div className="text-center py-20">
+                <div className="w-20 h-20 mx-auto mb-8 border border-gray-200 rounded-full flex items-center justify-center">
+                  <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={0.8} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
-                  <p className="text-sm text-gray-400 font-light">Interactive map coming soon</p>
-                  <p className="text-xs text-gray-300 font-light mt-1">Your culinary journey visualized</p>
                 </div>
+                <h2 className="text-xl font-light text-black mb-4">
+                  No Data to Analyze
+                </h2>
+                <p className="text-gray-500 text-sm max-w-md mx-auto leading-relaxed mb-8">
+                  Start documenting your culinary experiences to unlock personalized insights and trends
+                </p>
+                <button
+                  onClick={() => navigate('/add')}
+                  className="px-8 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition-all duration-300 text-sm font-light tracking-wide"
+                >
+                  Add Your First Entry
+                </button>
               </div>
-              
-              {/* Location List */}
-              <div className="space-y-3">
-                {Object.entries(locationStats)
-                  .sort(([,a], [,b]) => b - a)
-                  .slice(0, 5)
-                  .map(([location, count]) => (
-                    <div key={location} className="flex justify-between items-center py-2">
-                      <div className="flex items-center space-x-3">
-                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+            ) : (
+              <>
+                {/* Overview Cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                  <div className="bg-white border border-gray-100 rounded-xl p-3 sm:p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs sm:text-sm font-light text-gray-600 uppercase tracking-wider mb-1">
+                          Total Dishes
+                        </p>
+                        <p className="text-lg sm:text-2xl font-light text-black">
+                          {insights.totalDishes}
+                        </p>
+                      </div>
+                      <div className="w-8 h-8 sm:w-12 sm:h-12 bg-blue-50 rounded-full flex items-center justify-center">
+                        <svg className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <span className="text-black font-light">{location}</span>
                       </div>
-                      <span className="text-gray-400 text-sm font-light">{count} {count === 1 ? 'visit' : 'visits'}</span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          ) : null;
-        })()}
-
-        {/* Cuisine Map */}
-        {Object.keys(insights.cuisineMap).length > 0 && (
-          <div className="bg-white border border-gray-100 rounded-xl p-8">
-            <h3 className="text-lg font-light text-black mb-6">Cuisine Exploration</h3>
-            <div className="space-y-4">
-              {Object.entries(insights.cuisineMap)
-                .sort(([,a], [,b]) => b - a)
-                .map(([cuisine, count]) => {
-                  const percentage = (count / insights.totalDishes) * 100;
-                  return (
-                    <div key={cuisine} className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="capitalize text-black font-light">{cuisine}</span>
-                        <span className="text-gray-400 text-sm font-light">{count} dishes ({percentage.toFixed(0)}%)</span>
-                      </div>
-                      <div className="w-full bg-gray-100 rounded-full h-2">
-                        <div 
-                          className="bg-black h-2 rounded-full transition-all duration-700"
-                          style={{ width: `${percentage}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
-        )}
-
-        {/* Rating Distribution */}
-        <div className="bg-white border border-gray-100 rounded-xl p-8">
-          <h3 className="text-lg font-light text-black mb-6">Rating Distribution</h3>
-          <div className="space-y-4">
-            {[5, 4, 3, 2, 1].map(rating => {
-              const count = insights.spiceProfile[rating] || 0;
-              const percentage = insights.totalDishes > 0 ? (count / insights.totalDishes) * 100 : 0;
-              
-              return (
-                <div key={rating} className="flex items-center space-x-4">
-                  <div className="flex items-center w-16">
-                    <span className="text-sm font-light text-black">{rating}</span>
-                    <svg className="w-4 h-4 text-black ml-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <div className="w-full bg-gray-100 rounded-full h-3">
-                      <div 
-                        className="bg-black h-3 rounded-full transition-all duration-700"
-                        style={{ width: `${percentage}%` }}
-                      ></div>
                     </div>
                   </div>
-                  <span className="text-sm text-gray-400 w-12 text-right font-light">{count}</span>
+
+                  <div className="bg-white border border-gray-100 rounded-xl p-3 sm:p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs sm:text-sm font-light text-gray-600 uppercase tracking-wider mb-1">
+                          Avg Rating
+                        </p>
+                        <p className="text-lg sm:text-2xl font-light text-black">
+                          {insights.avgRating.toFixed(1)}
+                        </p>
+                      </div>
+                      <div className="w-8 h-8 sm:w-12 sm:h-12 bg-yellow-50 rounded-full flex items-center justify-center">
+                        <svg className="w-4 h-4 sm:w-6 sm:h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white border border-gray-100 rounded-xl p-3 sm:p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs sm:text-sm font-light text-gray-600 uppercase tracking-wider mb-1">
+                          Cuisines Tried
+                        </p>
+                        <p className="text-lg sm:text-2xl font-light text-black">
+                          {Object.keys(insights.cuisineMap).length}
+                        </p>
+                      </div>
+                      <div className="w-8 h-8 sm:w-12 sm:h-12 bg-green-50 rounded-full flex items-center justify-center">
+                        <svg className="w-4 h-4 sm:w-6 sm:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white border border-gray-100 rounded-xl p-3 sm:p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs sm:text-sm font-light text-gray-600 uppercase tracking-wider mb-1">
+                          Favorite Cuisine
+                        </p>
+                        <p className="text-sm sm:text-lg font-light text-black capitalize">
+                          {Object.keys(insights.cuisineMap).length > 0 
+                            ? Object.entries(insights.cuisineMap).sort(([,a], [,b]) => b - a)[0][0]
+                            : 'None yet'
+                          }
+                        </p>
+                      </div>
+                      <div className="w-8 h-8 sm:w-12 sm:h-12 bg-purple-50 rounded-full flex items-center justify-center">
+                        <svg className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
 
-        {/* Flavor Profile - Spider Chart */}
-        {Object.values(insights.spiderChartData).some(value => value > 0) && (
-          <div className="bg-white border border-gray-100 rounded-xl p-8">
-            <h3 className="text-lg font-light text-black mb-6 text-center">Flavor Profile</h3>
-            <div className="flex justify-center mb-6">
-              <SpiderChart data={insights.spiderChartData} size={240} />
-            </div>
-            <p className="text-center text-sm text-gray-400 font-light italic">
-              Your unique taste signature based on {insights.totalDishes} culinary experiences
-            </p>
+                {/* Charts Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
+                  {/* Flavor Profile */}
+                  <div className="bg-white border border-gray-100 rounded-xl p-4 sm:p-6">
+                    <h3 className="text-base sm:text-lg font-light text-black mb-4 sm:mb-6 flex items-center">
+                      <span className="w-1 h-4 sm:h-6 bg-black rounded-full mr-2 sm:mr-3"></span>
+                      Flavor Profile
+                    </h3>
+                    <div className="h-48 sm:h-64 flex items-center justify-center">
+                      <SpiderChart data={insights.spiderChartData} />
+                    </div>
+                  </div>
+
+                  {/* Rating Distribution */}
+                  <div className="bg-white border border-gray-100 rounded-xl p-4 sm:p-6">
+                    <h3 className="text-base sm:text-lg font-light text-black mb-4 sm:mb-6 flex items-center">
+                      <span className="w-1 h-4 sm:h-6 bg-black rounded-full mr-2 sm:mr-3"></span>
+                      Rating Distribution
+                    </h3>
+                    <div className="space-y-3">
+                      {[5, 4, 3, 2, 1].map(rating => {
+                        const count = insights.spiceProfile[rating] || 0;
+                        const percentage = insights.totalDishes > 0 ? (count / insights.totalDishes) * 100 : 0;
+                        return (
+                          <div key={rating} className="flex items-center space-x-3">
+                            <div className="flex items-center space-x-1 w-12">
+                              {[...Array(rating)].map((_, i) => (
+                                <svg key={i} className="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                              ))}
+                            </div>
+                            <div className="flex-1 bg-gray-100 rounded-full h-2">
+                              <div 
+                                className="bg-yellow-400 h-2 rounded-full transition-all duration-500"
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                            <span className="text-sm text-gray-600 w-8">{count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Location Map */}
+                <div className="bg-white border border-gray-100 rounded-xl p-4 sm:p-6">
+                  <h3 className="text-base sm:text-lg font-light text-black mb-4 sm:mb-6 flex items-center">
+                    <span className="w-1 h-4 sm:h-6 bg-black rounded-full mr-2 sm:mr-3"></span>
+                    Culinary Journey Map
+                  </h3>
+                  <div className="h-64 sm:h-96">
+                    <SimpleMap entries={insights.entries} />
+                  </div>
+                </div>
+
+                {/* Recommendations */}
+                <div className="bg-white border border-gray-100 rounded-xl p-4 sm:p-6">
+                  <h3 className="text-base sm:text-lg font-light text-black mb-4 sm:mb-6 flex items-center">
+                    <span className="w-1 h-4 sm:h-6 bg-black rounded-full mr-2 sm:mr-3"></span>
+                    Personalized Recommendations
+                  </h3>
+                  <FoodRecommendations entries={insights.entries} />
+                </div>
+              </>
+            )}
           </div>
         )}
-
-        {/* Quick Recommendations Preview */}
-        {insights.totalDishes >= 3 && (
-          <QuickRecommendations insights={insights} navigate={navigate} />
-        )}
-
-        {/* Action Button */}
-        <div className="text-center pt-6">
-          <button
-            onClick={() => navigate('/add')}
-            className="bg-black text-white px-8 py-3 rounded-lg font-light tracking-wide hover:bg-gray-800 transition-colors duration-200"
-          >
-            Continue Journey
-          </button>
-        </div>
-
-        </div>
-      </main>
+      </div>
       
       <BottomNavigation />
-    </div>
-  );
-};
-
-// Quick Recommendations Component
-const QuickRecommendations = ({ insights, navigate }) => {
-  const recommendations = useMemo(() => {
-    const engine = new FoodRecommendationEngine();
-    const userProfile = {
-      entries: insights.entries,
-      tagFrequency: insights.tagFrequency,
-      avgRating: insights.avgRating,
-      cuisineRatings: insights.cuisineRatings
-    };
-    return engine.generateRecommendations(userProfile);
-  }, [insights]);
-
-  if (recommendations.cuisines.length === 0) return null;
-
-  return (
-    <div className="bg-white border border-gray-100 rounded-xl p-6 text-center">
-      <h3 className="text-lg font-light text-black mb-3">🎯 Recommended: {recommendations.cuisines[0]?.name}</h3>
-      <p className="text-gray-500 text-sm mb-4 font-light">
-        {recommendations.tips[0] || "Based on your taste profile, this could be your next favorite!"}
-      </p>
-      <button
-        onClick={() => navigate('/recommendations')}
-        className="bg-black text-white px-6 py-2 rounded-lg text-sm font-light tracking-wide hover:bg-gray-800 transition-colors duration-200"
-      >
-        Explore Recommendations
-      </button>
     </div>
   );
 };
