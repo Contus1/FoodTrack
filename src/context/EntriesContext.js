@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import supabase from '../utils/supabaseClient';
 import { useAuth } from './AuthContext';
 
@@ -17,10 +17,15 @@ export const EntriesProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
-  const fetchEntries = async () => {
-    if (!user) return;
+  const fetchEntries = useCallback(async () => {
+    if (!user) {
+      setEntries([]);
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
+    
     try {
       const { data, error } = await supabase
         .from('entries')
@@ -28,14 +33,24 @@ export const EntriesProvider = ({ children }) => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setEntries(data || []);
+      if (error) {
+        console.error('Error fetching entries:', error);
+        setEntries([]);
+      } else {
+        setEntries(data || []);
+      }
     } catch (error) {
       console.error('Error fetching entries:', error);
+      setEntries([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  // Auto-fetch entries when user changes
+  useEffect(() => {
+    fetchEntries();
+  }, [fetchEntries]);
 
   const addEntry = async (entryData) => {
     if (!user) return { error: 'User not authenticated' };

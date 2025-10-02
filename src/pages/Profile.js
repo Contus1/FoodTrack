@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
+import BottomNavigation from '../components/BottomNavigation';
 
 const Profile = () => {
   const { user, signOut } = useAuth();
@@ -22,7 +23,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-16">
       <Header />
       
       <main className="container mx-auto px-4 py-6 max-w-md">
@@ -51,6 +52,8 @@ const Profile = () => {
           </button>
         </div>
       </main>
+      
+      <BottomNavigation />
     </div>
   );
 };

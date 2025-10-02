@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useEntries } from '../context/EntriesContext';
 import Header from '../components/Header';
 import StarRating from '../components/StarRating';
+import BottomNavigation from '../components/BottomNavigation';
 
 const AddEntry = () => {
   const navigate = useNavigate();
@@ -79,7 +80,7 @@ const AddEntry = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-16">
       <Header />
       
       <main className="container mx-auto px-4 py-6 max-w-md">
@@ -183,7 +184,7 @@ const AddEntry = () => {
           </div>
 
           {/* Submit Button */}
-          <div className="flex gap-3">
+          <div className="flex gap-3 pb-4">
             <button
               type="button"
               onClick={() => navigate('/')}
@@ -201,6 +202,8 @@ const AddEntry = () => {
           </div>
         </form>
       </main>
+      
+      <BottomNavigation />
     </div>
   );
 };

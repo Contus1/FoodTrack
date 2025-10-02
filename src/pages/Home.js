@@ -4,24 +4,23 @@ import { useEntries } from '../context/EntriesContext';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import EntryCard from '../components/EntryCard';
+import BottomNavigation from '../components/BottomNavigation';
 
 const Home = () => {
   const { user } = useAuth();
-  const { entries, loading, fetchEntries } = useEntries();
+  const { entries, loading } = useEntries();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) {
       navigate('/login');
-      return;
     }
-    fetchEntries();
-  }, [user, navigate, fetchEntries]);
+  }, [user, navigate]);
 
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-16">
       <Header />
       
       <main className="container mx-auto px-4 py-6 max-w-md">
@@ -57,6 +56,8 @@ const Home = () => {
           </div>
         )}
       </main>
+      
+      <BottomNavigation />
     </div>
   );
 };
