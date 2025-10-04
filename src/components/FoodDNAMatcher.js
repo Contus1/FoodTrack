@@ -11,6 +11,16 @@ const FoodDNAMatcher = () => {
   const [compatibilityData, setCompatibilityData] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [animationStep, setAnimationStep] = useState(0);
+  const [isLocked, setIsLocked] = useState(true);
+
+  // Require 5 friends to unlock Food DNA Matcher
+  const canUnlock = friends.length >= 5;
+
+  const handleUnlockAttempt = () => {
+    if (canUnlock) {
+      setIsLocked(false);
+    }
+  };
 
   useEffect(() => {
     loadAnalysisData();
@@ -220,7 +230,52 @@ const FoodDNAMatcher = () => {
   );
 
   return (
-    <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 rounded-3xl p-6 relative overflow-hidden">
+    <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 rounded-2xl p-4 md:p-6 relative overflow-hidden">
+      {/* Locked State */}
+      {isLocked && (
+        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-20 flex items-center justify-center rounded-2xl">
+          <div className="text-center max-w-xs px-4">
+            <div className="text-4xl md:text-5xl mb-3">🧬</div>
+            <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">Food DNA Locked</h3>
+            <p className="text-gray-600 text-xs md:text-sm mb-4 leading-relaxed">
+              Add {5 - friends.length} more friend{5 - friends.length !== 1 ? 's' : ''} to unlock food compatibility analysis!
+            </p>
+            <div className="flex items-center justify-center space-x-2 mb-4">
+              <div className="flex -space-x-1">
+                {[...Array(5)].map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 border-white flex items-center justify-center text-xs ${
+                      i < friends.length 
+                        ? 'bg-purple-500 text-white' 
+                        : 'bg-gray-300 text-gray-600'
+                    }`}
+                  >
+                    {i < friends.length ? '✓' : '👤'}
+                  </div>
+                ))}
+              </div>
+              <span className="text-xs md:text-sm text-gray-500">{friends.length}/5</span>
+            </div>
+            {canUnlock ? (
+              <button
+                onClick={handleUnlockAttempt}
+                className="px-4 py-2 md:px-6 md:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-sm font-medium hover:from-purple-600 hover:to-pink-600 transition-all"
+              >
+                🧬 Unlock DNA Matcher!
+              </button>
+            ) : (
+              <button
+                onClick={() => window.location.href = '#friends'}
+                className="px-4 py-2 md:px-6 md:py-3 bg-gray-100 text-gray-700 rounded-full text-sm font-medium hover:bg-gray-200 transition-all"
+              >
+                Find More Friends
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Animated DNA background */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-0 left-0 w-full h-full">

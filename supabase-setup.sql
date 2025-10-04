@@ -15,12 +15,22 @@ CREATE TABLE IF NOT EXISTS public.entries (
   notes TEXT,
   photo_url TEXT,
   location TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Add updated_at column to existing entries table (if it doesn't exist)
+ALTER TABLE public.entries 
+ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
 -- Create storage bucket for food images
 INSERT INTO storage.buckets (id, name, public) 
 VALUES ('food-images', 'food-images', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Create storage bucket for avatars
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('avatars', 'avatars', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Enable Row Level Security (RLS)
@@ -49,6 +59,9 @@ CREATE POLICY "Users can delete their own entries" ON public.entries
 DROP POLICY IF EXISTS "Users can upload their own images" ON storage.objects;
 DROP POLICY IF EXISTS "Users can view their own images" ON storage.objects;
 DROP POLICY IF EXISTS "Public images can be viewed" ON storage.objects;
+DROP POLICY IF EXISTS "Users can upload their own avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Users can view their own avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Public avatars can be viewed" ON storage.objects;
 
 -- Storage policies for food images
 CREATE POLICY "Users can upload their own images" ON storage.objects
@@ -65,6 +78,22 @@ CREATE POLICY "Users can view their own images" ON storage.objects
 
 CREATE POLICY "Public images can be viewed" ON storage.objects
   FOR SELECT USING (bucket_id = 'food-images');
+
+-- Storage policies for avatars
+CREATE POLICY "Users can upload their own avatars" ON storage.objects
+  FOR INSERT WITH CHECK (
+    bucket_id = 'avatars' AND 
+    auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+CREATE POLICY "Users can view their own avatars" ON storage.objects
+  FOR SELECT USING (
+    bucket_id = 'avatars' AND 
+    auth.uid()::text = (storage.foldername(name))[1]
+  );
+
+CREATE POLICY "Public avatars can be viewed" ON storage.objects
+  FOR SELECT USING (bucket_id = 'avatars');
 
 -- Optional: Create an index for better performance
 CREATE INDEX IF NOT EXISTS entries_user_id_created_at_idx 
@@ -251,6 +280,26 @@ CREATE POLICY "Users can view accessible entries" ON public.entries
 -- FUNCTIONS AND TRIGGERS
 -- ====================================
 
+-- Function to get user profile (bypasses cache issues)
+CREATE OR REPLACE FUNCTION public.get_user_profile(user_uuid UUID)
+RETURNS TABLE(
+  id UUID,
+  username TEXT,
+  display_name TEXT,
+  bio TEXT,
+  avatar_url TEXT,
+  is_private BOOLEAN,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT up.id, up.username, up.display_name, up.bio, up.avatar_url, up.is_private, up.created_at, up.updated_at
+  FROM public.user_profiles up
+  WHERE up.id = user_uuid;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Function to create user profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
@@ -290,6 +339,11 @@ CREATE TRIGGER update_user_profiles_updated_at
 DROP TRIGGER IF EXISTS update_friendships_updated_at ON public.friendships;
 CREATE TRIGGER update_friendships_updated_at
   BEFORE UPDATE ON public.friendships
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_entries_updated_at ON public.entries;
+CREATE TRIGGER update_entries_updated_at
+  BEFORE UPDATE ON public.entries
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- ====================================

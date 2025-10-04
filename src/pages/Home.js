@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSocial } from '../context/SocialContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import SocialFeed from '../components/SocialFeed';
 import FriendsManager from '../components/FriendsManager';
 import BottomNavigation from '../components/BottomNavigation';
@@ -10,6 +10,7 @@ const Home = () => {
   const { user } = useAuth();
   const { userProfile, friendRequests } = useSocial();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('feed');
   const [showNotificationBadge, setShowNotificationBadge] = useState(false);
 
@@ -23,28 +24,38 @@ const Home = () => {
     setShowNotificationBadge(friendRequests.length > 0);
   }, [friendRequests]);
 
+  // Handle URL tab parameter
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && (tab === 'friends' || tab === 'feed')) {
+      setActiveTab(tab);
+      // Clear the URL parameter after setting the tab
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams]);
+
   if (!user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-16">
       {/* Header */}
       <div className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-gray-100 z-10">
-        <div className="max-w-6xl mx-auto px-6 py-4">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-1 h-8 bg-black rounded-full"></div>
-              <h1 className="text-2xl font-light tracking-wide text-black">
+            <div className="flex items-center space-x-3 md:space-x-4">
+              <div className="w-1 h-6 md:h-8 bg-black rounded-full"></div>
+              <h1 className="text-xl md:text-2xl font-light tracking-wide text-black">
                 FoodTrack
               </h1>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3 md:space-x-4">
               {/* Add Entry Button */}
               <button
                 onClick={() => navigate('/add')}
-                className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800 transition-all duration-300 shadow-md hover:shadow-lg"
+                className="w-9 h-9 md:w-10 md:h-10 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800 transition-all duration-300 shadow-md hover:shadow-lg"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
               </button>
@@ -52,15 +63,25 @@ const Home = () => {
               {/* Profile Avatar */}
               <button
                 onClick={() => navigate('/profile')}
-                className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg"
+                className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden bg-gray-100"
               >
-                {userProfile?.display_name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'U'}
+                {userProfile?.avatar_url ? (
+                  <img
+                    src={userProfile.avatar_url}
+                    alt={userProfile.display_name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-black text-white flex items-center justify-center text-xs md:text-sm font-light">
+                    {userProfile?.display_name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                )}
               </button>
             </div>
           </div>
           
           {/* Tab Navigation */}
-          <div className="flex mt-4 space-x-8">
+          <div className="flex mt-3 md:mt-4 space-x-6 md:space-x-8">
             <button
               onClick={() => setActiveTab('feed')}
               className={`relative py-2 px-1 text-sm font-medium transition-colors ${
@@ -88,7 +109,7 @@ const Home = () => {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-6">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 md:py-6">
         {activeTab === 'feed' && <SocialFeed />}
         {activeTab === 'friends' && <FriendsManager />}
       </div>

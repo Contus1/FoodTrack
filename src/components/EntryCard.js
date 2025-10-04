@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import StarRating from './StarRating';
 import { useEntries } from '../context/EntriesContext';
 
 const EntryCard = ({ entry, viewMode = 'list' }) => {
   const [showMenu, setShowMenu] = useState(false);
   const { deleteEntry } = useEntries();
+  const navigate = useNavigate();
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -27,8 +29,7 @@ const EntryCard = ({ entry, viewMode = 'list' }) => {
   };
 
   const handleEdit = () => {
-    // TODO: Navigate to edit page
-    console.log('Edit entry:', entry.id);
+    navigate(`/add?edit=${entry.id}`);
     setShowMenu(false);
   };
 

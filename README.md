@@ -9,6 +9,7 @@ A sophisticated social media platform for food enthusiasts to document, share, a
 - **Friend Management**: Search, add, and connect with fellow food lovers
 - **Interactive Posts**: Like, save, and comment on food entries
 - **User Profiles**: Personalized profiles with bio, follower stats, and food galleries
+- **Profile Pictures**: Upload and customize avatar images with automatic storage management
 
 ### 🧬 Unique Social Components
 
@@ -80,6 +81,8 @@ A sophisticated social media platform for food enthusiasts to document, share, a
    - Create a new Supabase project
    - Run the SQL setup script: `supabase-setup.sql`
    - This creates all necessary tables for social features
+   - Creates storage buckets for food images and profile pictures
+   - Sets up Row Level Security (RLS) policies for data protection
 
 5. **Start the development server**
    ```bash

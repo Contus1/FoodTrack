@@ -33,7 +33,34 @@ if (!supabaseUrl || !supabaseAnonKey ||
   console.warn('Please set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY in your .env file.');
   supabase = mockSupabase;
 } else {
-  supabase = createClient(supabaseUrl, supabaseAnonKey);
+  console.log('✅ Supabase client initialized with URL:', supabaseUrl);
+  supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    db: {
+      schema: 'public'
+    },
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 10
+      }
+    }
+  });
+  
+  // Test the connection
+  supabase.from('user_profiles').select('count', { count: 'exact', head: true })
+    .then(({ data, error, count }) => {
+      if (error) {
+        console.error('❌ Supabase connection test failed:', error);
+      } else {
+        console.log('✅ Supabase connection test successful. User profiles table accessible.');
+      }
+    })
+    .catch(err => {
+      console.error('❌ Supabase connection error:', err);
+    });
 }
 
 export default supabase;

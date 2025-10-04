@@ -1,69 +1,171 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import FoodRecommendationEngine from '../utils/recommendationEngine';
+import { FoodRecommendationEngine } from '../utils/recommendationEngine';
+import { useEntries } from '../context/EntriesContext';
 
-const Recommendations = ({ userProfile }) => {
+const Recommendations = () => {
   const navigate = useNavigate();
+  const { entries } = useEntries();
   
-  const recommendations = useMemo(() => {
+  const discoveryData = useMemo(() => {
+    if (!entries || entries.length === 0) return null;
+
+    // Prepare user profile for the recommendation engine
+    const cuisineRatings = {};
+    const tagFrequency = {};
+    let totalRating = 0;
+
+    entries.forEach(entry => {
+      totalRating += entry.rating || 0;
+
+      // Process tags
+      if (entry.tags && Array.isArray(entry.tags)) {
+        entry.tags.forEach(tag => {
+          const lowerTag = tag.toLowerCase();
+          tagFrequency[lowerTag] = (tagFrequency[lowerTag] || 0) + 1;
+
+          // Identify cuisines
+          const cuisineKeywords = ['italian', 'chinese', 'mexican', 'indian', 'japanese', 'french', 'thai', 'american', 'korean', 'vietnamese', 'mediterranean', 'greek', 'spanish', 'lebanese', 'turkish', 'moroccan', 'brazilian', 'argentinian', 'peruvian'];
+          const cuisine = cuisineKeywords.find(keyword => lowerTag.includes(keyword));
+          
+          if (cuisine) {
+            if (!cuisineRatings[cuisine]) {
+              cuisineRatings[cuisine] = { total: 0, count: 0, avg: 0 };
+            }
+            cuisineRatings[cuisine].total += entry.rating || 0;
+            cuisineRatings[cuisine].count++;
+            cuisineRatings[cuisine].avg = cuisineRatings[cuisine].total / cuisineRatings[cuisine].count;
+          }
+        });
+      }
+    });
+
+    const avgRating = totalRating / entries.length;
+
+    const userProfile = {
+      entries,
+      tagFrequency,
+      avgRating,
+      cuisineRatings
+    };
+
     const engine = new FoodRecommendationEngine();
     return engine.generateRecommendations(userProfile);
-  }, [userProfile]);
+  }, [entries]);
 
-  if (!userProfile.entries || userProfile.entries.length === 0) {
+  if (!entries || entries.length === 0) {
     return (
-      <div className="bg-white rounded-lg p-6 shadow-sm">
-        <h3 className="font-semibold text-gray-900 mb-3">🎯 Discover New Flavors</h3>
-        <div className="text-center py-6">
-          <div className="text-4xl mb-3">🌟</div>
-          <p className="text-gray-500 mb-4">Add more entries to get personalized recommendations!</p>
+      <div className="space-y-6">
+        <div className="text-center py-12">
+          <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center">
+            <span className="text-3xl">🍽️</span>
+          </div>
+          <h3 className="text-xl font-light text-gray-900 mb-3">Start Your Culinary Journey</h3>
+          <p className="text-gray-500 mb-6 max-w-md mx-auto">
+            Add a few food entries to get personalized recommendations based on your taste preferences!
+          </p>
           <button
             onClick={() => navigate('/add')}
-            className="bg-primary-500 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-primary-600 transition-colors"
+            className="px-6 py-3 bg-black text-white rounded-full font-medium hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl"
           >
-            Add Entry
+            Add Your First Dish
           </button>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-primary-500 to-orange-600 rounded-lg p-6 text-white shadow-sm">
-        <h3 className="font-bold text-lg mb-2">🚀 New Adventures Await</h3>
-        <p className="text-primary-100 text-sm">
-          Based on your taste profile, here's what we recommend
-        </p>
-      </div>
+  if (!discoveryData) return null;
 
+  return (
+    <div className="space-y-6">
       {/* Cuisine Recommendations */}
-      {recommendations.cuisines.length > 0 && (
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <h4 className="font-semibold text-gray-900 mb-3">🌍 Try These Cuisines</h4>
+      {discoveryData.cuisines && discoveryData.cuisines.length > 0 && (
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-lg font-light text-gray-900">🌍 Explore New Cuisines</h4>
+            <span className="text-xs text-gray-500">Based on your preferences</span>
+          </div>
           <div className="space-y-3">
-            {recommendations.cuisines.map((cuisine, index) => (
-              <div key={cuisine.key} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="flex-shrink-0 w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                  <span className="text-primary-600 font-bold text-sm">#{index + 1}</span>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <h5 className="font-medium text-gray-900">Try {cuisine.name}</h5>
-                    <span className="text-xs text-green-600 font-medium">
+            {discoveryData.cuisines.slice(0, 3).map((cuisine, index) => (
+              <div key={cuisine.key || index} className="p-4 border border-gray-100 rounded-xl hover:border-gray-200 transition-colors group">
+                <div className="flex items-center justify-between mb-2">
+                  <h5 className="font-medium text-gray-900">{cuisine.name} Cuisine</h5>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                       {cuisine.confidence}% match
                     </span>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      index === 0 ? 'bg-green-100 text-green-700' :
+                      index === 1 ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-orange-100 text-orange-700'
+                    }`}>
+                      {index === 0 ? 'Perfect' : index === 1 ? 'Great' : 'Good'} fit
+                    </span>
                   </div>
-                  {cuisine.reasons.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {cuisine.reasons.map((reason, idx) => (
-                        <span key={idx} className="text-xs text-gray-600 bg-white px-2 py-1 rounded-full">
-                          {reason}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                </div>
+                {cuisine.reasons && cuisine.reasons.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {cuisine.reasons.slice(0, 3).map((reason, idx) => (
+                      <span key={idx} className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-full">
+                        {reason}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <button 
+                  onClick={() => navigate('/add')}
+                  className="text-xs text-black hover:text-gray-700 font-medium group-hover:underline"
+                >
+                  Try this cuisine →
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Specific Dish Recommendations */}
+      {discoveryData.dishes && discoveryData.dishes.length > 0 && (
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-lg font-light text-gray-900">🍽️ Perfect Dishes for You</h4>
+            <span className="text-xs text-gray-500">Flavor matched</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {discoveryData.dishes.slice(0, 4).map((dish, index) => (
+              <div key={index} className="p-4 border border-gray-100 rounded-xl hover:border-gray-200 transition-colors group">
+                <div className="flex justify-between items-start mb-2">
+                  <h5 className="font-medium text-gray-900 text-sm">{dish.name}</h5>
+                  <span className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
+                    {dish.cuisine}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-600 mb-2">
+                  {dish.reasons ? dish.reasons.join(' • ') : 'Recommended for you'}
+                </p>
+                <button 
+                  onClick={() => navigate('/add')}
+                  className="text-xs text-black hover:text-gray-700 font-medium group-hover:underline"
+                >
+                  Add to try list →
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Personal Tips */}
+      {discoveryData.tips && discoveryData.tips.length > 0 && (
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
+          <h4 className="text-lg font-light text-gray-900 mb-4">💡 Personal Culinary Tips</h4>
+          <div className="space-y-3">
+            {discoveryData.tips.slice(0, 3).map((tip, index) => (
+              <div key={index} className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                <div className="flex items-start space-x-2">
+                  <div className="text-blue-600 text-sm font-medium flex-shrink-0">Tip:</div>
+                  <p className="text-blue-800 text-sm">{tip}</p>
                 </div>
               </div>
             ))}
@@ -71,57 +173,29 @@ const Recommendations = ({ userProfile }) => {
         </div>
       )}
 
-      {/* Dish Recommendations */}
-      {recommendations.dishes.length > 0 && (
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <h4 className="font-semibold text-gray-900 mb-3">🍽️ Specific Dishes to Try</h4>
-          <div className="grid gap-3">
-            {recommendations.dishes.map((dish, index) => (
-              <div key={index} className="border border-gray-200 rounded-lg p-3 hover:border-primary-300 transition-colors">
-                <div className="flex justify-between items-start mb-1">
-                  <h5 className="font-medium text-gray-900">{dish.name}</h5>
-                  <span className="text-xs text-primary-600 font-medium">{dish.cuisine}</span>
-                </div>
-                <p className="text-xs text-gray-500">{dish.reasons.join(' • ')}</p>
-              </div>
-            ))}
-          </div>
+      {/* Action Section */}
+      <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-6 text-center border border-gray-200">
+        <div className="mb-4">
+          <span className="text-2xl mb-2 block">🎯</span>
+          <h4 className="text-lg font-light text-gray-900 mb-2">Ready for Your Next Adventure?</h4>
+          <p className="text-gray-600 text-sm max-w-md mx-auto">
+            These recommendations are tailored to expand your palate while staying true to your taste preferences.
+          </p>
         </div>
-      )}
-
-      {/* Tips */}
-      {recommendations.tips.length > 0 && (
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <h4 className="font-semibold text-gray-900 mb-3">💡 Personal Tips</h4>
-          <div className="space-y-2">
-            {recommendations.tips.map((tip, index) => (
-              <div key={index} className="flex items-start space-x-2 p-3 bg-blue-50 rounded-lg">
-                <div className="text-blue-600 text-sm font-medium flex-shrink-0">Tip:</div>
-                <p className="text-blue-800 text-sm">{tip}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Action Button */}
-      <div className="bg-white rounded-lg p-4 shadow-sm text-center">
-        <p className="text-gray-600 text-sm mb-3">
-          Found something interesting? Add it to your diary!
-        </p>
         <button
           onClick={() => navigate('/add')}
-          className="bg-primary-500 text-white px-6 py-3 rounded-full font-medium hover:bg-primary-600 transition-colors"
+          className="px-6 py-3 bg-black text-white rounded-full font-medium hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl"
         >
-          Try Something New
+          Start Exploring
         </button>
       </div>
 
-      {/* Algorithm Info */}
-      <div className="bg-gray-50 rounded-lg p-4 text-center">
-        <p className="text-xs text-gray-500">
-          🤖 Recommendations powered by intelligent analysis of your taste patterns, 
-          spice preferences, and cuisine exploration history
+      {/* Algorithm Explanation */}
+      <div className="bg-gray-50 rounded-2xl p-4 text-center border border-gray-100">
+        <p className="text-xs text-gray-500 leading-relaxed">
+          🤖 Your recommendations are powered by intelligent analysis of your {entries.length} food entries, 
+          including your flavor preferences, cuisine exploration patterns, and rating history. 
+          The more you track, the better your recommendations become.
         </p>
       </div>
     </div>

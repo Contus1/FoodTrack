@@ -119,13 +119,57 @@ export const EntriesProvider = ({ children }) => {
     }
   };
 
-  const value = {
+  const updateEntry = async (entryId, entryData) => {
+    console.log('UpdateEntry called with:', { entryId, entryData });
+    try {
+      if (!user) {
+        console.error('No user found for updating entry');
+        throw new Error('User not authenticated');
+      }
+
+      console.log('Updating entry in database...');
+      const { data, error } = await supabase
+        .from('entries')
+        .update({
+          title: entryData.title,
+          rating: entryData.rating,
+          tags: entryData.tags,
+          notes: entryData.notes,
+          location: entryData.location,
+          photo_url: entryData.photo_url
+        })
+        .eq('id', entryId)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Database update error:', error);
+        throw error;
+      }
+
+      console.log('Database update successful:', data);
+      // Update local state
+      setEntries(prevEntries => 
+        prevEntries.map(entry => 
+          entry.id === entryId ? { ...entry, ...data } : entry
+        )
+      );
+
+      console.log('Local state updated');
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error updating entry:', error);
+      return { data: null, error };
+    }
+  };  const value = {
     entries,
     loading,
     fetchEntries,
     addEntry,
     uploadImage,
     deleteEntry,
+    updateEntry,
   };
 
   return (

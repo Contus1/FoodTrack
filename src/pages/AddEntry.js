@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useEntries } from '../context/EntriesContext';
 import BottomNavigation from '../components/BottomNavigation';
@@ -9,7 +9,10 @@ import LocationAutocomplete from '../components/LocationAutocomplete';
 const AddEntry = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { addEntry, uploadImage } = useEntries();
+  const { addEntry, updateEntry, uploadImage, entries } = useEntries();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get('edit');
+  const isEditing = !!editId;
   
   const [formData, setFormData] = useState({
     title: '',
@@ -21,6 +24,28 @@ const AddEntry = () => {
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Load entry data for editing
+  useEffect(() => {
+    console.log('Edit effect triggered:', { isEditing, editId, entriesLength: entries.length });
+    if (isEditing && entries.length > 0) {
+      const entryToEdit = entries.find(entry => entry.id === editId);
+      console.log('Entry to edit:', entryToEdit);
+      if (entryToEdit) {
+        setFormData({
+          title: entryToEdit.title || '',
+          rating: entryToEdit.rating || 3,
+          tags: entryToEdit.tags || [],
+          notes: entryToEdit.notes || '',
+          location: entryToEdit.location || '',
+          photo_url: entryToEdit.photo_url || '',
+        });
+        console.log('Form data set for editing');
+      } else {
+        console.log('Entry not found with ID:', editId);
+      }
+    }
+  }, [isEditing, editId, entries]);
 
   const commonTags = ['Spicy', 'Sweet', 'Savory', 'Vegetarian', 'Vegan', 'Healthy', 'Comfort Food', 'Asian', 'Italian', 'Mexican'];
 
@@ -47,10 +72,12 @@ const AddEntry = () => {
     e.preventDefault();
     if (!user) return;
 
+    console.log('HandleSubmit called:', { isEditing, editId, formData });
     setLoading(true);
     try {
-      let photoUrl = '';
+      let photoUrl = formData.photo_url;
       
+      // Only upload new image if file was selected
       if (selectedFile) {
         photoUrl = await uploadImage(selectedFile);
       }
@@ -60,16 +87,27 @@ const AddEntry = () => {
         photo_url: photoUrl,
       };
 
-      const { error } = await addEntry(entryData);
-      
-      if (error) {
-        alert('Error saving entry: ' + error.message);
+      let result;
+      if (isEditing) {
+        console.log('Attempting to update entry with data:', entryData);
+        result = await updateEntry(editId, entryData);
+        console.log('Update entry result:', result);
       } else {
+        console.log('Attempting to add new entry with data:', entryData);
+        result = await addEntry(entryData);
+        console.log('Add entry result:', result);
+      }
+      
+      if (result.error) {
+        console.error('Entry operation error:', result.error);
+        alert(`Error ${isEditing ? 'updating' : 'saving'} entry: ` + result.error.message);
+      } else {
+        console.log('Entry operation successful, navigating to home');
         navigate('/');
       }
     } catch (error) {
-      console.error('Error saving entry:', error);
-      alert('Error saving entry');
+      console.error(`Error ${isEditing ? 'updating' : 'saving'} entry:`, error);
+      alert(`Error ${isEditing ? 'updating' : 'saving'} entry`);
     } finally {
       setLoading(false);
     }
@@ -97,7 +135,7 @@ const AddEntry = () => {
             <div className="flex items-center space-x-4">
               <div className="w-1 h-8 bg-black rounded-full"></div>
               <h1 className="text-xl font-light tracking-wide text-black">
-                New Creation
+                {isEditing ? 'Edit Entry' : 'New Creation'}
               </h1>
             </div>
             <div className="w-11"></div>

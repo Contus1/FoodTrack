@@ -232,7 +232,7 @@ const Insights = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-16">
       {/* Header */}
-      <div className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-gray-100 z-10">
+      <div className="sticky top-0 bg-white backdrop-blur-xl border-b border-gray-100 z-10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between mb-3 sm:mb-4">
             <div className="flex items-center space-x-3 sm:space-x-4">
@@ -272,7 +272,8 @@ const Insights = () => {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+      {/* Content area with proper padding to account for sticky header */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6 pt-8 sm:pt-12">{/* Increased padding-top for better header clearance */}
         {/* Social Insights Tab */}
         {activeTab === 'social' && (
           <div className="space-y-8">
