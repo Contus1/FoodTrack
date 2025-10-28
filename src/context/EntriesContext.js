@@ -17,7 +17,7 @@ export const EntriesProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
-  const fetchEntries = useCallback(async () => {
+  const fetchEntries = useCallback(async (limit = 50, offset = 0) => {
     if (!user) {
       setEntries([]);
       setLoading(false);
@@ -27,17 +27,24 @@ export const EntriesProvider = ({ children }) => {
     setLoading(true);
     
     try {
+      // Fetch only essential fields for list view, with pagination
       const { data, error } = await supabase
         .from('entries')
-        .select('*')
+        .select('id, title, rating, tags, location, photo_url, created_at, is_private')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
 
       if (error) {
         console.error('Error fetching entries:', error);
         setEntries([]);
       } else {
-        setEntries(data || []);
+        if (offset === 0) {
+          setEntries(data || []);
+        } else {
+          // Append for pagination
+          setEntries(prev => [...prev, ...(data || [])]);
+        }
       }
     } catch (error) {
       console.error('Error fetching entries:', error);

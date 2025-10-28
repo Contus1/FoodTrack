@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSocial } from '../context/SocialContext';
 import { useEntries } from '../context/EntriesContext';
 
 const FoodDNAMatcher = () => {
-  const { user } = useAuth();
   const { friends, getSocialFeed } = useSocial();
   const { entries: userEntries } = useEntries();
   const [allEntries, setAllEntries] = useState([]);
@@ -22,6 +20,15 @@ const FoodDNAMatcher = () => {
     }
   };
 
+  const loadAnalysisData = useCallback(async () => {
+    try {
+      const socialEntries = await getSocialFeed(100);
+      setAllEntries(socialEntries);
+    } catch (error) {
+      console.error('Error loading analysis data:', error);
+    }
+  }, [getSocialFeed]);
+
   useEffect(() => {
     loadAnalysisData();
     // Animation sequence
@@ -29,17 +36,12 @@ const FoodDNAMatcher = () => {
       setAnimationStep(prev => (prev + 1) % 4);
     }, 2000);
     return () => clearInterval(timer);
-  }, [friends, userEntries]);
+  }, [loadAnalysisData]);
 
-  const loadAnalysisData = async () => {
-    try {
-      const socialEntries = await getSocialFeed(100);
-      setAllEntries(socialEntries);
-      analyzeCompatibility();
-    } catch (error) {
-      console.error('Error loading analysis data:', error);
-    }
-  };
+  useEffect(() => {
+    analyzeCompatibility();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [friends, userEntries, allEntries]);
 
   const analyzeCompatibility = () => {
     const compatibility = friends.map(friendship => {
@@ -119,19 +121,16 @@ const FoodDNAMatcher = () => {
 
   const calculateCompatibility = (profile1, profile2) => {
     let compatibility = 0;
-    let factors = 0;
 
     // Rating similarity (30% weight)
     const ratingDiff = Math.abs(profile1.avgRating - profile2.avgRating);
     compatibility += (5 - ratingDiff) / 5 * 30;
-    factors += 30;
 
     // Trait similarity (70% weight)
     const traits = ['adventurous', 'sweetTooth', 'spiceLover', 'healthConscious'];
     traits.forEach(trait => {
       const diff = Math.abs(profile1[trait] - profile2[trait]);
       compatibility += (100 - diff) * 0.175; // 70% / 4 traits = 17.5% each
-      factors += 17.5;
     });
 
     return Math.round(compatibility);
@@ -162,13 +161,6 @@ const FoodDNAMatcher = () => {
     });
 
     return recommendations.slice(0, 3);
-  };
-
-  const getCompatibilityColor = (score) => {
-    if (score >= 80) return 'from-green-400 to-emerald-500';
-    if (score >= 60) return 'from-yellow-400 to-orange-400';
-    if (score >= 40) return 'from-orange-400 to-red-400';
-    return 'from-red-400 to-red-500';
   };
 
   const getCompatibilityEmoji = (score) => {

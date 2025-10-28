@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSocial } from '../context/SocialContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,13 +12,13 @@ const FriendSearch = () => {
   const [inviteQuery, setInviteQuery] = useState('');
   const navigate = useNavigate();
 
-  // Get friend IDs for filtering
-  const friendIds = new Set(friends.map(f => f.friend.id));
+  // Get friend IDs for filtering (memoized to avoid recreating Set on every render)
+  const friendIds = useMemo(() => new Set(friends.map(f => f.friend.id)), [friends]);
   
-  // Get sent request IDs for filtering
-  const sentRequestIds = new Set(sentRequests.map(r => r.addressee_id));
+  // Get sent request IDs for filtering (memoized to avoid recreating Set on every render)
+  const sentRequestIds = useMemo(() => new Set(sentRequests.map(r => r.addressee_id)), [sentRequests]);
 
-  const handleSearch = async (query) => {
+  const handleSearch = useCallback(async (query) => {
     if (!query.trim()) {
       setSearchResults([]);
       return;
@@ -42,7 +42,7 @@ const FriendSearch = () => {
     } finally {
       setSearching(false);
     }
-  };
+  }, [searchUsers, friendIds, sentRequestIds]);
 
   const handleSendRequest = async (userId) => {
     console.log('Handle send request called for user:', userId);
@@ -109,7 +109,7 @@ Hope to see you there! 😊`;
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+  }, [searchQuery, handleSearch]);
 
   return (
     <div className="space-y-3 md:space-y-4">

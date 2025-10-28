@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import supabase from '../utils/supabaseClient';
 
@@ -22,7 +22,7 @@ export const SocialProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   // Load user profile
-  const loadUserProfile = async () => {
+  const loadUserProfile = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -41,7 +41,7 @@ export const SocialProvider = ({ children }) => {
     } catch (error) {
       console.error('Error loading profile:', error);
     }
-  };
+  }, [user]);
 
   // Create or update user profile
   const updateUserProfile = async (profileData) => {
@@ -159,7 +159,7 @@ export const SocialProvider = ({ children }) => {
   };
 
   // Load friends and friend requests
-  const loadFriends = async () => {
+  const loadFriends = useCallback(async () => {
     if (!user) return;
 
     console.log('Loading friends and requests for user:', user.id);
@@ -252,7 +252,7 @@ export const SocialProvider = ({ children }) => {
     } catch (error) {
       console.error('Error loading friends:', error);
     }
-  };
+  }, [user]);
 
   // Send friend request
   const sendFriendRequest = async (userId) => {
@@ -721,7 +721,7 @@ export const SocialProvider = ({ children }) => {
     };
 
     loadUserData();
-  }, [user]);
+  }, [user, loadUserProfile, loadFriends]);
 
   const value = {
     userProfile,

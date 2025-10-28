@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSocial } from '../context/SocialContext';
@@ -9,7 +9,7 @@ import BottomNavigation from '../components/BottomNavigation';
 const UserProfile = () => {
   const { userId } = useParams();
   const { user } = useAuth();
-  const { friends, sendFriendRequest, userProfile } = useSocial();
+  const { friends, sendFriendRequest } = useSocial();
   const navigate = useNavigate();
   
   const [targetUser, setTargetUser] = useState(null);
@@ -18,23 +18,7 @@ const UserProfile = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [friendshipStatus, setFriendshipStatus] = useState(null);
 
-  useEffect(() => {
-    if (userId === user?.id) {
-      navigate('/profile');
-      return;
-    }
-    
-    loadUserData();
-  }, [userId, user]);
-
-  useEffect(() => {
-    // Check friendship status
-    const friendship = friends.find(f => f.friend.id === userId);
-    setIsFollowing(!!friendship);
-    setFriendshipStatus(friendship?.status);
-  }, [friends, userId]);
-
-  const loadUserData = async () => {
+  const loadUserData = useCallback(async () => {
     setLoading(true);
     try {
       // Load user profile
@@ -88,7 +72,23 @@ const UserProfile = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, user, navigate]);
+
+  useEffect(() => {
+    if (userId === user?.id) {
+      navigate('/profile');
+      return;
+    }
+    
+    loadUserData();
+  }, [userId, user, navigate, loadUserData]);
+
+  useEffect(() => {
+    // Check friendship status
+    const friendship = friends.find(f => f.friend.id === userId);
+    setIsFollowing(!!friendship);
+    setFriendshipStatus(friendship?.status);
+  }, [friends, userId]);
 
   const handleSendFriendRequest = async () => {
     try {

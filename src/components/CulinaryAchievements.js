@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useEntries } from '../context/EntriesContext';
 import { useSocial } from '../context/SocialContext';
 
 const CulinaryAchievements = () => {
-  const { user } = useAuth();
   const { entries } = useEntries();
   const { friends } = useSocial();
   const [achievements, setAchievements] = useState([]);
@@ -14,6 +12,7 @@ const CulinaryAchievements = () => {
 
   useEffect(() => {
     calculateAchievements();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entries, friends]);
 
   // Check if user has enough friends to unlock achievements
@@ -265,7 +264,7 @@ const CulinaryAchievements = () => {
     return stats;
   };
 
-  const calculateAchievements = () => {
+  const calculateAchievements = useCallback(() => {
     const stats = calculateStats();
     const earnedAchievements = [];
     let totalPoints = 0;
@@ -302,7 +301,13 @@ const CulinaryAchievements = () => {
       
       setTimeout(() => setCelebrationAchievement(null), 5000);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entries, friends]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    calculateAchievements();
+  }, [calculateAchievements]);
 
   const calculateProgress = (achievement, stats) => {
     // Simple progress calculation for demonstration

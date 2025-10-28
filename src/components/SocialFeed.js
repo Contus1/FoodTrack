@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSocial } from '../context/SocialContext';
 import { useNavigate } from 'react-router-dom';
 import StarRating from './StarRating';
 
 const SocialFeedCard = ({ entry, onLike, onSave, onComment }) => {
-  const { user } = useAuth();
   const [isCommenting, setIsCommenting] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [showAllComments, setShowAllComments] = useState(false);
@@ -219,7 +218,7 @@ const SocialFeed = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadFeed = async (refresh = false) => {
+  const loadFeed = useCallback(async (refresh = false) => {
     if (refresh) {
       setRefreshing(true);
     } else {
@@ -235,13 +234,13 @@ const SocialFeed = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [getSocialFeed]);
 
   useEffect(() => {
     if (user) {
       loadFeed();
     }
-  }, [user]);
+  }, [user, loadFeed]);
 
   const handleLike = async (entryId) => {
     const entry = entries.find(e => e.id === entryId);

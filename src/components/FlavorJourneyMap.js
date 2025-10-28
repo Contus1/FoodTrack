@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSocial } from '../context/SocialContext';
 import { useEntries } from '../context/EntriesContext';
 
@@ -9,11 +9,7 @@ const FlavorJourneyMap = () => {
   const [selectedCuisine, setSelectedCuisine] = useState(null);
   const [hoveredEntry, setHoveredEntry] = useState(null);
 
-  useEffect(() => {
-    loadEntries();
-  }, [entries]); // Add entries as dependency since loadEntries uses getSocialFeed
-
-  const loadEntries = async () => {
+  const loadEntries = useCallback(async () => {
     try {
       const socialEntries = await getSocialFeed(50);
       const combinedEntries = [...entries, ...socialEntries];
@@ -21,7 +17,11 @@ const FlavorJourneyMap = () => {
     } catch (error) {
       console.error('Error loading entries:', error);
     }
-  };
+  }, [entries, getSocialFeed]);
+
+  useEffect(() => {
+    loadEntries();
+  }, [loadEntries]);
 
   // Extract cuisine types from tags and locations
   const getCuisineTypes = () => {
@@ -75,8 +75,9 @@ const FlavorJourneyMap = () => {
 
   const flavorConnections = getFlavorConnections();
 
-  // Generate mystical colors based on cuisine type (moved inside render for potential future use)
-  const renderCuisineNode = (connection, i) => {
+  // Helper function to get cuisine colors
+  // eslint-disable-next-line no-unused-vars
+  const getCuisineColor = (cuisine) => {
     const colors = {
       'italian': 'from-red-400 to-green-400',
       'chinese': 'from-red-500 to-yellow-400',
@@ -90,7 +91,7 @@ const FlavorJourneyMap = () => {
       'american': 'from-blue-500 to-red-500'
     };
     
-    return colors[connection.cuisine.toLowerCase()] || 'from-gray-400 to-gray-600';
+    return colors[cuisine.toLowerCase()] || 'from-gray-400 to-gray-600';
   };
 
   return (

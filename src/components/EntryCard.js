@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StarRating from './StarRating';
+import OptimizedImage from './OptimizedImage';
 import { useEntries } from '../context/EntriesContext';
 
 const EntryCard = ({ entry, viewMode = 'list' }) => {
@@ -47,10 +48,10 @@ const EntryCard = ({ entry, viewMode = 'list' }) => {
         {/* Image */}
         <div className="relative overflow-hidden bg-gray-50 aspect-[4/5] rounded-lg">
           {entry.photo_url ? (
-            <img
+            <OptimizedImage
               src={entry.photo_url}
               alt={entry.title}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              className="w-full h-full transition-transform duration-700 group-hover:scale-105"
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
@@ -148,10 +149,10 @@ const EntryCard = ({ entry, viewMode = 'list' }) => {
       {/* Image */}
       <div className="relative overflow-hidden bg-gray-50 h-64">
         {entry.photo_url ? (
-          <img
+          <OptimizedImage
             src={entry.photo_url}
             alt={entry.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            className="w-full h-full transition-transform duration-700 group-hover:scale-105"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">

@@ -24,7 +24,7 @@ const isSupabaseConfigured = () => {
 };
 
 const AppContent = () => {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
 
   // Show loading spinner while checking auth
   if (loading) {
