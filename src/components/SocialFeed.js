@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSocial } from '../context/SocialContext';
 import { useNavigate } from 'react-router-dom';
 import StarRating from './StarRating';
+import { getBulkDishCommunityRatings } from '../utils/dishManager';
 
 const SocialFeedCard = ({ entry, onLike, onSave, onComment }) => {
   const [isCommenting, setIsCommenting] = useState(false);
@@ -83,12 +84,29 @@ const SocialFeedCard = ({ entry, onLike, onSave, onComment }) => {
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
           <h2 className="font-medium text-gray-900 text-lg">{entry.title}</h2>
-          {entry.rating && (
-            <div className="flex items-center space-x-1">
-              <StarRating rating={entry.rating} size="sm" readOnly />
-              <span className="text-sm text-gray-600">{entry.rating}</span>
-            </div>
-          )}
+          <div className="ml-3 flex flex-col items-end space-y-1">
+            {entry.rating && (
+              <div className="flex items-center space-x-1">
+                <span className="text-xs text-gray-500 mr-1">Personal:</span>
+                <div className="bg-white rounded-lg px-2 py-1 border border-gray-100">
+                  <span className="text-sm font-medium text-gray-900">{entry.rating}/10</span>
+                </div>
+              </div>
+            )}
+            {entry.communityRating && entry.communityRating.totalRatings > 0 && (
+              <div className="flex items-center space-x-1">
+                <span className="text-xs text-gray-400 mr-1">Community:</span>
+                <div className="bg-gray-50 rounded-lg px-2 py-1">
+                  <span className="text-xs font-medium text-gray-600">
+                    {entry.communityRating.avgRating.toFixed(1)}/10
+                  </span>
+                  <span className="text-xs text-gray-400 ml-1">
+                    ({entry.communityRating.totalRatings})
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {entry.notes && (
@@ -111,11 +129,24 @@ const SocialFeedCard = ({ entry, onLike, onSave, onComment }) => {
         {/* Actions */}
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">
           <div className="flex items-center space-x-4">
-            <button className="flex items-center space-x-1 text-gray-600 hover:text-red-500 transition-colors">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button 
+              onClick={() => onLike(entry.id)}
+              className={`flex items-center space-x-1 transition-colors ${
+                entry.isLiked ? 'text-red-500' : 'text-gray-600 hover:text-red-500'
+              }`}
+            >
+              <svg 
+                className="w-4 h-4" 
+                fill={entry.isLiked ? 'currentColor' : 'none'} 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
-              <span className="text-xs">Like</span>
+              <span className="text-xs">{entry.isLiked ? 'Liked' : 'Like'}</span>
+              {entry.likesCount > 0 && (
+                <span className="text-xs">({entry.likesCount})</span>
+              )}
             </button>
             
             <button 
@@ -126,13 +157,26 @@ const SocialFeedCard = ({ entry, onLike, onSave, onComment }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a9.013 9.013 0 01-5.916-2.165L3 21l2.165-4.084A9.013 9.013 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z" />
               </svg>
               <span className="text-xs">Comment</span>
+              {entry.comments?.length > 0 && (
+                <span className="text-xs">({entry.comments.length})</span>
+              )}
             </button>
             
-            <button className="flex items-center space-x-1 text-gray-600 hover:text-yellow-500 transition-colors">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button 
+              onClick={() => onSave(entry.id)}
+              className={`flex items-center space-x-1 transition-colors ${
+                entry.isSaved ? 'text-yellow-500' : 'text-gray-600 hover:text-yellow-500'
+              }`}
+            >
+              <svg 
+                className="w-4 h-4" 
+                fill={entry.isSaved ? 'currentColor' : 'none'} 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
               </svg>
-              <span className="text-xs">Save</span>
+              <span className="text-xs">{entry.isSaved ? 'Saved' : 'Save'}</span>
             </button>
           </div>
         </div>
@@ -227,7 +271,25 @@ const SocialFeed = () => {
 
     try {
       const feedEntries = await getSocialFeed();
-      setEntries(feedEntries);
+      
+      // Get community ratings for all dishes
+      const dishIds = feedEntries
+        .filter(entry => entry.dish_id)
+        .map(entry => entry.dish_id);
+      
+      if (dishIds.length > 0) {
+        const communityRatings = await getBulkDishCommunityRatings(dishIds);
+        
+        // Add community ratings to entries
+        const entriesWithRatings = feedEntries.map(entry => ({
+          ...entry,
+          communityRating: entry.dish_id ? communityRatings.get(entry.dish_id) : null
+        }));
+        
+        setEntries(entriesWithRatings);
+      } else {
+        setEntries(feedEntries);
+      }
     } catch (error) {
       console.error('Error loading feed:', error);
     } finally {

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSocial } from '../context/SocialContext';
-import { useEntries } from '../context/EntriesContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import supabase from '../utils/supabaseClient';
 import BottomNavigation from '../components/BottomNavigation';
@@ -69,9 +68,6 @@ const ProfileHeader = ({ profile, isOwnProfile, isFollowing, onFollow, onUnfollo
 };
 
 const ProfileStats = ({ entries, friends }) => {
-  const avgRating = entries?.length > 0 
-    ? (entries.reduce((sum, entry) => sum + (entry.rating || 0), 0) / entries.length).toFixed(1)
-    : '0.0';
 
   return (
     <div className="bg-gray-50 border-b border-gray-100">
@@ -87,10 +83,6 @@ const ProfileStats = ({ entries, friends }) => {
             <div className="text-gray-500 text-xs uppercase tracking-wide">Friends</div>
           </div>
           
-          <div className="text-center">
-            <div className="text-xl font-light text-black">{avgRating}</div>
-            <div className="text-gray-500 text-xs uppercase tracking-wide">Rating</div>
-          </div>
         </div>
       </div>
     </div>
@@ -237,7 +229,6 @@ const EditProfileModal = ({ profile, isOpen, onClose, onSave }) => {
 const Profile = () => {
   const { user, signOut } = useAuth();
   const { userProfile, updateUserProfile, friends } = useSocial();
-  const { entries } = useEntries();
   const navigate = useNavigate();
   const { userId } = useParams();
   
@@ -245,19 +236,65 @@ const Profile = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [activeTab, setActiveTab] = useState('posts');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [userEntries, setUserEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
   
   const fileInputRef = useRef(null);
 
   const isOwnProfile = !userId || userId === user?.id;
-  const currentProfile = isOwnProfile ? userProfile : null; // TODO: Load other user's profile
+  const currentProfile = isOwnProfile ? userProfile : null;
   const currentUserId = isOwnProfile ? user?.id : userId;
 
-  // Filter entries based on user and search
-  const filteredEntries = entries.filter(entry => {
-    // First filter by user
-    if (entry.user_id !== currentUserId) return false;
+  // Fetch entries for the current user
+  useEffect(() => {
+    const fetchUserEntries = async () => {
+      if (!currentUserId) return;
+      
+      setLoading(true);
+      try {
+        console.log('Fetching entries for user:', currentUserId);
+        
+        const { data, error } = await supabase
+          .from('entries')
+          .select('*')
+          .eq('user_id', currentUserId)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching user entries:', error);
+          setUserEntries([]);
+        } else {
+          console.log('Fetched entries:', data?.length || 0, 'entries');
+          if (data && data.length > 0) {
+            console.log('Sample entry:', data[0]);
+          }
+          setUserEntries(data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching entries:', error);
+        setUserEntries([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserEntries();
     
-    // Then filter by search query if any
+    // Also refresh when window regains focus (user comes back to tab)
+    const handleFocus = () => {
+      console.log('Window focused, refreshing entries...');
+      fetchUserEntries();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [currentUserId]);
+
+  // Filter entries based on search query
+  const filteredEntries = userEntries.filter(entry => {
     if (!searchQuery) return true;
     
     return (
@@ -267,15 +304,6 @@ const Profile = () => {
       entry.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   });
-
-  // Debug: Log entries data to console
-  console.log('All entries:', entries.length);
-  console.log('Current user ID:', currentUserId);
-  console.log('Filtered entries for user:', filteredEntries.length);
-  console.log('Sample entry:', filteredEntries[0]);
-  if (filteredEntries[0]) {
-    console.log('Photo URL in first entry:', filteredEntries[0].photo_url);
-  }
 
   useEffect(() => {
     if (!user) {
@@ -394,6 +422,17 @@ const Profile = () => {
 
   if (!user) return null;
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-2 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-black font-light">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -506,7 +545,12 @@ const Profile = () => {
       <div className="max-w-4xl mx-auto px-4 pb-20">
         {activeTab === 'posts' && (
           <>
-            {filteredEntries.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-16">
+                <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-500 text-sm">Loading dishes...</p>
+              </div>
+            ) : filteredEntries.length === 0 ? (
               <div className="text-center py-16">
                 {searchQuery ? (
                   <div>

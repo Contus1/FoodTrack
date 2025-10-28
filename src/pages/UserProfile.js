@@ -36,36 +36,28 @@ const UserProfile = () => {
 
       setTargetUser(profileData);
 
-      // Load user's public entries
+      // Load user's public entries (is_private = false OR NULL)
+      console.log('🔍 Fetching entries for user:', userId);
       const { data: entriesData, error: entriesError } = await supabase
         .from('entries')
-        .select(`
-          *,
-          user_profile:user_profiles(*),
-          likes:entry_likes(user_id),
-          saves:entry_saves(user_id),
-          comments:entry_comments(
-            *,
-            user_profile:user_profiles(*)
-          ),
-          _count:entry_likes(count)
-        `)
+        .select('*')
         .eq('user_id', userId)
-        .eq('is_private', false)
+        .or('is_private.eq.false,is_private.is.null')
         .order('created_at', { ascending: false });
 
+      console.log('📊 Query result:', { 
+        entriesCount: entriesData?.length || 0, 
+        hasError: !!entriesError,
+        error: entriesError 
+      });
+
       if (entriesError) {
-        console.error('Error loading user entries:', entriesError);
+        console.error('❌ Error loading user entries:', entriesError);
+        console.error('Error details:', JSON.stringify(entriesError, null, 2));
       } else {
-        // Process entries with interaction flags
-        const processedEntries = entriesData?.map(entry => ({
-          ...entry,
-          isLiked: entry.likes?.some(like => like.user_id === user?.id) || false,
-          isSaved: entry.saves?.some(save => save.user_id === user?.id) || false,
-          likesCount: entry._count?.[0]?.count || 0
-        })) || [];
-        
-        setUserEntries(processedEntries);
+        console.log('✅ Loaded entries:', entriesData);
+        // Just use the basic entry data - we don't need joins for the profile view
+        setUserEntries(entriesData || []);
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -208,12 +200,6 @@ const UserProfile = () => {
             <div>
               <div className="text-lg font-medium text-black">{userEntries.length}</div>
               <div className="text-sm text-gray-500">Dishes</div>
-            </div>
-            <div>
-              <div className="text-lg font-medium text-black">
-                {userEntries.reduce((sum, entry) => sum + (entry.rating || 0), 0) / Math.max(userEntries.length, 1) || 0}
-              </div>
-              <div className="text-sm text-gray-500">Avg Rating</div>
             </div>
           </div>
         </div>

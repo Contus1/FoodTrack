@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 
 const StarRating = ({ value = 0, onRatingChange, readonly = false, size = 'md' }) => {
   const sizes = {
-    sm: 'w-4 h-4',
+    sm: 'w-3 h-3',
     md: 'w-5 h-5',
     lg: 'w-6 h-6'
   };
@@ -13,17 +13,23 @@ const StarRating = ({ value = 0, onRatingChange, readonly = false, size = 'md' }
     }
   }, [readonly, onRatingChange]);
 
-  return (
+  // For 1-10 rating, we'll use two rows of 5 stars
+  // Top row: 1-5, Bottom row: 6-10
+  const topRow = [1, 2, 3, 4, 5];
+  const bottomRow = [6, 7, 8, 9, 10];
+
+  const renderStarRow = (stars) => (
     <div className="flex items-center space-x-1">
-      {[1, 2, 3, 4, 5].map((star) => (
+      {stars.map((star) => (
         <button
           key={star}
           type="button"
           onClick={() => handleStarClick(star)}
           disabled={readonly}
           className={`${sizes[size]} transition-all duration-150 ${
-            readonly ? 'cursor-default' : 'cursor-pointer hover:scale-105 active:scale-95'
+            readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110 active:scale-95'
           }`}
+          title={`${star}/10`}
         >
           <svg
             fill={star <= value ? '#fbbf24' : '#e5e7eb'}
@@ -40,6 +46,13 @@ const StarRating = ({ value = 0, onRatingChange, readonly = false, size = 'md' }
           </svg>
         </button>
       ))}
+    </div>
+  );
+
+  return (
+    <div className={`flex flex-col ${size === 'sm' ? 'space-y-0.5' : 'space-y-1'}`}>
+      {renderStarRow(topRow)}
+      {renderStarRow(bottomRow)}
     </div>
   );
 };

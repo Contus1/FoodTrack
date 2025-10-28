@@ -38,6 +38,13 @@ A sophisticated social media platform for food enthusiasts to document, share, a
 - **Tag System**: Categorize dishes with custom tags
 - **Advanced Search**: Filter by cuisine, location, rating, and tags
 
+### 🔔 PWA & Notifications
+- **Progressive Web App**: Install as native app on any device
+- **Push Notifications**: Get notified when friends post new meals
+- **Real-time Updates**: Instant notifications for friend requests and social activity
+- **Offline Support**: Service worker for offline functionality
+- **Smart Prompts**: Non-intrusive notification permission requests
+
 ### 📊 Advanced Analytics
 - **Spider Chart**: Visual flavor profile analysis
 - **Interactive Maps**: Geographic visualization of your food journey
@@ -75,7 +82,10 @@ A sophisticated social media platform for food enthusiasts to document, share, a
    ```env
    REACT_APP_SUPABASE_URL=your-supabase-url
    REACT_APP_SUPABASE_ANON_KEY=your-supabase-anon-key
+   REACT_APP_VAPID_PUBLIC_KEY=your-vapid-public-key
    ```
+   
+   Generate VAPID keys for push notifications at: https://web-push-codelab.glitch.me/
 
 4. **Database Setup**
    - Create a new Supabase project
@@ -104,6 +114,7 @@ A sophisticated social media platform for food enthusiasts to document, share, a
 - **entry_saves**: Saved food entries
 - **entry_comments**: Comments and discussions
 - **notifications**: Real-time social notifications
+- **push_subscriptions**: Web push notification device tokens
 
 ### Advanced Features
 - **RLS (Row Level Security)**: Comprehensive data protection
@@ -139,6 +150,13 @@ A sophisticated social media platform for food enthusiasts to document, share, a
 5. **AI-Powered Insights**: Advanced analytics that learn from your preferences
 
 ## 🔮 Roadmap
+
+### Recently Added ✅
+- [x] PWA Support with Service Workers
+- [x] Push Notifications System
+- [x] Real-time In-App Notifications
+- [x] Notification Permission Management
+- [x] Automatic Friend Activity Alerts
 
 ### Upcoming Features
 - [ ] AR Menu Recognition

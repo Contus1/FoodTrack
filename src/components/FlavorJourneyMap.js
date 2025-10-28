@@ -207,7 +207,7 @@ const FlavorJourneyMap = () => {
                 <h3 className="font-medium text-gray-900 mb-2">{hoveredEntry.cuisine}</h3>
                 <div className="space-y-1 text-sm text-gray-600">
                   <div>Dishes: {hoveredEntry.entries.length}</div>
-                  <div>Avg Rating: ⭐ {hoveredEntry.avgRating.toFixed(1)}/5</div>
+                  <div>Avg Rating: ⭐ {hoveredEntry.avgRating.toFixed(1)}/10</div>
                   <div className="text-xs mt-2">
                     {hoveredEntry.entries.slice(0, 3).map(entry => entry.title).join(', ')}
                     {hoveredEntry.entries.length > 3 && '...'}
@@ -254,10 +254,10 @@ const FlavorJourneyMap = () => {
                       </h4>
                       <div className="flex items-center space-x-1">
                         <span className="text-xs text-yellow-500">
-                          {'⭐'.repeat(entry.rating || 0)}
+                          {'⭐'.repeat(Math.min(entry.rating || 0, 10))}
                         </span>
                         <span className="text-xs text-gray-500">
-                          {entry.rating}/5
+                          {entry.rating}/10
                         </span>
                       </div>
                     </div>

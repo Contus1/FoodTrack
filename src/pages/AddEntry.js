@@ -6,6 +6,7 @@ import BottomNavigation from '../components/BottomNavigation';
 import StarRating from '../components/StarRating';
 import LocationAutocomplete from '../components/LocationAutocomplete';
 import { compressImage, shouldCompress } from '../utils/imageOptimization';
+import { getOrCreateDish } from '../utils/dishManager';
 
 const AddEntry = () => {
   const navigate = useNavigate();
@@ -17,11 +18,12 @@ const AddEntry = () => {
   
   const [formData, setFormData] = useState({
     title: '',
-    rating: 3,
+    rating: 5,
     tags: [],
     notes: '',
     location: '',
     photo_url: '',
+    is_private: false, // Default to public posts
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -36,11 +38,12 @@ const AddEntry = () => {
       if (entryToEdit) {
         setFormData({
           title: entryToEdit.title || '',
-          rating: entryToEdit.rating || 3,
+          rating: entryToEdit.rating || 5,
           tags: entryToEdit.tags || [],
           notes: entryToEdit.notes || '',
           location: entryToEdit.location || '',
           photo_url: entryToEdit.photo_url || '',
+          is_private: entryToEdit.is_private || false,
         });
         console.log('Form data set for editing');
       } else {
@@ -104,9 +107,23 @@ const AddEntry = () => {
         photoUrl = await uploadImage(selectedFile);
       }
 
+      // Get or create dish based on title
+      let dishId = null;
+      if (formData.title && formData.title.trim()) {
+        try {
+          const dish = await getOrCreateDish(formData.title);
+          dishId = dish.id;
+          console.log('Dish created/found:', dish);
+        } catch (dishError) {
+          console.error('Error managing dish:', dishError);
+          // Continue without dish linkage if there's an error
+        }
+      }
+
       const entryData = {
         ...formData,
         photo_url: photoUrl,
+        dish_id: dishId,
       };
 
       let result;

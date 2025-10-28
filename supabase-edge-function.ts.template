@@ -1,0 +1,167 @@
+// ============================================
+// SUPABASE EDGE FUNCTION: Send Push Notifications
+// ============================================
+// This is a Supabase Edge Function (Deno) to send push notifications
+// 
+// ⚠️ NOTE: TypeScript errors in this file are NORMAL
+// This file uses Deno (not Node.js) and won't compile in your project
+// It's meant to be deployed to Supabase, not run locally
+//
+// SETUP INSTRUCTIONS:
+// 1. Install Supabase CLI: https://supabase.com/docs/guides/cli
+// 2. Run: supabase functions new send-push-notification
+// 3. Replace the contents with this file
+// 4. Deploy: supabase functions deploy send-push-notification
+//
+// OR create manually in Supabase Dashboard:
+// Dashboard > Edge Functions > New Function > "send-push-notification"
+
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  try {
+    // Initialize Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    // Get request body
+    const { userId, title, body, data } = await req.json()
+
+    if (!userId) {
+      throw new Error('userId is required')
+    }
+
+    // Get user's push subscriptions
+    const { data: subscriptions, error: subError } = await supabaseClient
+      .from('push_subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+
+    if (subError) throw subError
+
+    if (!subscriptions || subscriptions.length === 0) {
+      return new Response(
+        JSON.stringify({ message: 'No push subscriptions found for user' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      )
+    }
+
+    // VAPID keys (generate at https://web-push-codelab.glitch.me/)
+    // Store these in Supabase Edge Function Secrets
+    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY')
+    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY')
+    const vapidEmail = Deno.env.get('VAPID_EMAIL') || 'mailto:your-email@example.com'
+
+    if (!vapidPublicKey || !vapidPrivateKey) {
+      throw new Error('VAPID keys not configured')
+    }
+
+    // Prepare notification payload
+    const payload = JSON.stringify({
+      title: title || 'FoodTrack Notification',
+      body: body || 'You have a new update',
+      icon: '/favicon-32x32.svg',
+      badge: '/favicon-16x16.svg',
+      data: data || {},
+    })
+
+    // Send push notification to each subscription
+    const results = await Promise.allSettled(
+      subscriptions.map(async (sub) => {
+        try {
+          // Use web-push library (need to import it)
+          // For now, using fetch to Web Push API
+          const response = await fetch(sub.endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'TTL': '86400',
+              'Authorization': `vapid t=${generateVapidToken(vapidPrivateKey, sub.endpoint, vapidEmail)}, k=${vapidPublicKey}`,
+            },
+            body: encryptPayload(payload, sub.keys),
+          })
+
+          if (!response.ok) {
+            // If subscription is no longer valid, delete it
+            if (response.status === 404 || response.status === 410) {
+              await supabaseClient
+                .from('push_subscriptions')
+                .delete()
+                .eq('id', sub.id)
+              
+              return { success: false, error: 'Subscription expired', deleted: true }
+            }
+            throw new Error(`Push failed: ${response.status}`)
+          }
+
+          // Update last_used_at
+          await supabaseClient
+            .from('push_subscriptions')
+            .update({ last_used_at: new Date().toISOString() })
+            .eq('id', sub.id)
+
+          return { success: true, endpoint: sub.endpoint }
+        } catch (error) {
+          return { success: false, error: error.message, endpoint: sub.endpoint }
+        }
+      })
+    )
+
+    const successful = results.filter((r) => r.status === 'fulfilled' && r.value.success).length
+    const failed = results.length - successful
+
+    return new Response(
+      JSON.stringify({
+        message: 'Push notifications sent',
+        total: subscriptions.length,
+        successful,
+        failed,
+        results,
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+    )
+  } catch (error) {
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+    )
+  }
+})
+
+// ============================================
+// HELPER FUNCTIONS (Simplified)
+// ============================================
+// Note: For production, use the web-push library
+// This is a simplified version for demonstration
+
+function generateVapidToken(privateKey: string, endpoint: string, email: string): string {
+  // In production, use proper JWT library and VAPID token generation
+  // For now, return placeholder
+  return 'VAPID_TOKEN_PLACEHOLDER'
+}
+
+function encryptPayload(payload: string, keys: any): string {
+  // In production, use proper Web Push encryption (aes128gcm)
+  // For now, return payload as-is
+  return payload
+}
+
+// ============================================
+// ALTERNATIVE: SIMPLE VERSION WITHOUT ENCRYPTION
+// ============================================
+// If the above is too complex, you can trigger notifications via Supabase Realtime
+// The client will listen and show browser notifications directly
+// This is what the current implementation does!
