@@ -8,10 +8,12 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.1",
     "react-scripts": "5.0.1",
+    "serve": "^14.2.0",
     "workbox-webpack-plugin": "^7.3.0"
   },
   "scripts": {
-    "start": "GENERATE_SOURCEMAP=false BROWSER=none react-scripts start",
+    "dev": "GENERATE_SOURCEMAP=false BROWSER=none react-scripts start",
+    "start": "serve -s build -l 3000",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
