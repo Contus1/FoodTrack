@@ -11,14 +11,14 @@ import { getOrCreateDish } from '../utils/dishManager';
 const AddEntry = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { addEntry, updateEntry, uploadImage, entries } = useEntries();
+  const { addEntry, updateEntry, uploadImage, entries, deleteEntry } = useEntries();
   const [searchParams] = useSearchParams();
   const editId = searchParams.get('edit');
   const isEditing = !!editId;
   
   const [formData, setFormData] = useState({
     title: '',
-    rating: 5,
+    rating: 10,
     tags: [],
     notes: '',
     location: '',
@@ -38,7 +38,7 @@ const AddEntry = () => {
       if (entryToEdit) {
         setFormData({
           title: entryToEdit.title || '',
-          rating: entryToEdit.rating || 5,
+          rating: entryToEdit.rating || 10,
           tags: entryToEdit.tags || [],
           notes: entryToEdit.notes || '',
           location: entryToEdit.location || '',
@@ -91,6 +91,29 @@ const AddEntry = () => {
         ? prev.tags.filter(t => t !== tag)
         : [...prev.tags, tag]
     }));
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this entry? This action cannot be undone.')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await deleteEntry(editId);
+      if (result.error) {
+        console.error('Delete entry error:', result.error);
+        alert('Error deleting entry: ' + result.error.message);
+      } else {
+        console.log('Entry deleted successfully');
+        navigate('/profile');
+      }
+    } catch (error) {
+      console.error('Error deleting entry:', error);
+      alert('Error deleting entry');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -317,21 +340,34 @@ const AddEntry = () => {
           </div>
 
           {/* Submit Buttons */}
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={() => navigate('/')}
-              className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
-            >
-              {loading ? 'Saving...' : 'Save Entry'}
-            </button>
+          <div className="space-y-3 pt-4">
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => navigate('/')}
+                className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
+              >
+                {loading ? 'Saving...' : 'Save Entry'}
+              </button>
+            </div>
+            
+            {isEditing && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={loading}
+                className="w-full py-3 border-2 border-red-500 text-red-500 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors font-medium"
+              >
+                {loading ? 'Deleting...' : 'Delete Entry'}
+              </button>
+            )}
           </div>
         </form>
       </main>

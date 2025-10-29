@@ -518,6 +518,81 @@ export const SocialProvider = ({ children }) => {
     }
   };
 
+  // Get saved entries
+  const getSavedEntries = async () => {
+    if (!user) return [];
+
+    try {
+      // First, get the entry IDs that are saved
+      const { data: saves, error: savesError } = await supabase
+        .from('entry_saves')
+        .select('entry_id, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (savesError) {
+        console.error('Error fetching saved entry IDs:', savesError);
+        throw savesError;
+      }
+
+      if (!saves || saves.length === 0) {
+        console.log('No saved entries found');
+        return [];
+      }
+
+      console.log('Saved entry IDs:', saves);
+
+      // Then fetch the full entry details with user profiles
+      const entryIds = saves.map(save => save.entry_id);
+      const { data: entries, error: entriesError } = await supabase
+        .from('entries')
+        .select(`
+          id,
+          title,
+          rating,
+          tags,
+          location,
+          photo_url,
+          created_at,
+          user_id,
+          dish_id,
+          user_profiles!entries_user_id_fkey (
+            id,
+            username,
+            display_name,
+            avatar_url
+          )
+        `)
+        .in('id', entryIds);
+
+      if (entriesError) {
+        console.error('Error fetching entry details:', entriesError);
+        throw entriesError;
+      }
+
+      console.log('Fetched entries:', entries);
+
+      // Transform the data to match the feed format and maintain save order
+      const savedEntries = saves
+        .map(save => {
+          const entry = entries?.find(e => e.id === save.entry_id);
+          if (!entry) return null;
+          return {
+            ...entry,
+            user: entry.user_profiles,
+            isSaved: true
+          };
+        })
+        .filter(entry => entry !== null);
+
+      console.log('Transformed saved entries:', savedEntries);
+      return savedEntries;
+    } catch (error) {
+      console.error('Error getting saved entries:', error);
+      return [];
+    }
+  };
+
   // Add comment to entry
   const addComment = async (entryId, content) => {
     if (!user) return;
@@ -740,6 +815,7 @@ export const SocialProvider = ({ children }) => {
     unlikeEntry,
     saveEntry,
     unsaveEntry,
+    getSavedEntries,
     addComment,
     getSocialFeed,
     loadFriends

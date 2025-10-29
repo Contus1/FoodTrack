@@ -228,7 +228,7 @@ const EditProfileModal = ({ profile, isOpen, onClose, onSave }) => {
 
 const Profile = () => {
   const { user, signOut } = useAuth();
-  const { userProfile, updateUserProfile, friends } = useSocial();
+  const { userProfile, updateUserProfile, friends, getSavedEntries } = useSocial();
   const navigate = useNavigate();
   const { userId } = useParams();
   
@@ -237,6 +237,7 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('posts');
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [userEntries, setUserEntries] = useState([]);
+  const [savedEntries, setSavedEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   
   const fileInputRef = useRef(null);
@@ -244,6 +245,26 @@ const Profile = () => {
   const isOwnProfile = !userId || userId === user?.id;
   const currentProfile = isOwnProfile ? userProfile : null;
   const currentUserId = isOwnProfile ? user?.id : userId;
+
+  // Fetch saved entries when on saved tab
+  useEffect(() => {
+    const fetchSavedEntries = async () => {
+      if (!isOwnProfile || activeTab !== 'saved' || !getSavedEntries) return;
+      
+      setLoading(true);
+      try {
+        const saved = await getSavedEntries();
+        setSavedEntries(saved || []);
+      } catch (error) {
+        console.error('Error fetching saved entries:', error);
+        setSavedEntries([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSavedEntries();
+  }, [activeTab, isOwnProfile, getSavedEntries]);
 
   // Fetch entries for the current user
   useEffect(() => {
@@ -622,10 +643,47 @@ const Profile = () => {
         )}
 
         {activeTab === 'saved' && (
-          <div className="text-center py-16">
-            <p className="text-gray-500 text-sm mb-2">No saved dishes</p>
-            <p className="text-gray-400 text-xs">Save dishes from friends to see them here</p>
-          </div>
+          <>
+            {loading ? (
+              <div className="text-center py-16">
+                <div className="inline-block w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin"></div>
+              </div>
+            ) : savedEntries.length === 0 ? (
+              <div className="text-center py-16">
+                <p className="text-gray-500 text-sm mb-2">No saved dishes</p>
+                <p className="text-gray-400 text-xs">Save dishes from friends to see them here</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {savedEntries.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer group"
+                    onClick={() => navigate(`/add?edit=${entry.id}`)}
+                  >
+                    {entry.photo_url ? (
+                      <img
+                        src={entry.photo_url}
+                        alt={entry.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                        <span className="text-4xl">🍽️</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
+                      <div className="text-white text-sm font-medium truncate">{entry.title}</div>
+                      <div className="text-white/80 text-xs">
+                        {entry.rating}/10
+                        {entry.user && ` • @${entry.user.username}`}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 
