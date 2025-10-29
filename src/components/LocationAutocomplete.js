@@ -38,7 +38,7 @@ const LOCATION_SUGGESTIONS = [
   'Auckland, New Zealand', 'Wellington, New Zealand'
 ];
 
-const LocationAutocomplete = ({ value, onChange, placeholder = "Where did you eat this?", className = "" }) => {
+const LocationAutocomplete = ({ value, onChange, placeholder = "Where did you eat this?", className = "", disabled = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
@@ -57,6 +57,8 @@ const LocationAutocomplete = ({ value, onChange, placeholder = "Where did you ea
   }, []);
 
   const handleInputChange = (e) => {
+    if (disabled) return;
+    
     const inputValue = e.target.value;
     onChange(inputValue);
 
@@ -76,12 +78,16 @@ const LocationAutocomplete = ({ value, onChange, placeholder = "Where did you ea
   };
 
   const handleSuggestionClick = (suggestion) => {
+    if (disabled) return;
+    
     onChange(suggestion);
     setIsOpen(false);
     inputRef.current?.blur();
   };
 
   const handleUseCurrentLocation = () => {
+    if (disabled) return;
+    
     if (!navigator.geolocation) {
       alert('Geolocation is not supported by your browser');
       return;
@@ -148,16 +154,17 @@ const LocationAutocomplete = ({ value, onChange, placeholder = "Where did you ea
           value={value}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          onFocus={() => value.length > 0 && suggestions.length > 0 && setIsOpen(true)}
+          onFocus={() => !disabled && value.length > 0 && suggestions.length > 0 && setIsOpen(true)}
           placeholder={placeholder}
-          className="w-full px-4 py-3 pr-24 border border-gray-200 rounded-lg focus:ring-1 focus:ring-black focus:border-black transition-colors duration-200 font-light bg-white"
+          disabled={disabled}
+          className="w-full px-4 py-3 pr-24 border border-gray-200 rounded-lg focus:ring-1 focus:ring-black focus:border-black transition-colors duration-200 font-light bg-white disabled:bg-gray-50 disabled:text-gray-700 disabled:cursor-not-allowed"
         />
         <div className="absolute inset-y-0 right-0 flex items-center pr-2 space-x-1">
           <button
             type="button"
             onClick={handleUseCurrentLocation}
-            disabled={isGettingLocation}
-            className="p-2 text-gray-400 hover:text-black transition-colors rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            disabled={isGettingLocation || disabled}
+            className="p-2 text-gray-400 hover:text-black transition-colors rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             title="Use current location"
           >
             {isGettingLocation ? (
@@ -180,7 +187,7 @@ const LocationAutocomplete = ({ value, onChange, placeholder = "Where did you ea
         </div>
       </div>
 
-      {isOpen && suggestions.length > 0 && (
+      {isOpen && suggestions.length > 0 && !disabled && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
           {suggestions.map((suggestion, index) => (
             <button

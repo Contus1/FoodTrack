@@ -143,7 +143,8 @@ export const EntriesProvider = ({ children }) => {
           tags: entryData.tags,
           notes: entryData.notes,
           location: entryData.location,
-          photo_url: entryData.photo_url
+          photo_url: entryData.photo_url,
+          tagged_friends: entryData.tagged_friends || []
         })
         .eq('id', entryId)
         .eq('user_id', user.id)

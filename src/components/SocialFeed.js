@@ -4,12 +4,36 @@ import { useSocial } from '../context/SocialContext';
 import { useNavigate } from 'react-router-dom';
 import StarRating from './StarRating';
 import { getBulkDishCommunityRatings } from '../utils/dishManager';
+import supabase from '../utils/supabaseClient';
 
 const SocialFeedCard = ({ entry, onLike, onSave, onComment }) => {
   const [isCommenting, setIsCommenting] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [showAllComments, setShowAllComments] = useState(false);
+  const [taggedFriendNames, setTaggedFriendNames] = useState([]);
   const navigate = useNavigate();
+
+  // Fetch tagged friend names
+  useEffect(() => {
+    const fetchTaggedFriends = async () => {
+      if (!entry.tagged_friends || entry.tagged_friends.length === 0) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('id, display_name, username')
+          .in('id', entry.tagged_friends);
+        
+        if (!error && data) {
+          setTaggedFriendNames(data);
+        }
+      } catch (error) {
+        console.error('Error fetching tagged friends:', error);
+      }
+    };
+    
+    fetchTaggedFriends();
+  }, [entry.tagged_friends]);
 
   const handleSubmitComment = async (e) => {
     e.preventDefault();
@@ -131,6 +155,26 @@ const SocialFeedCard = ({ entry, onLike, onSave, onComment }) => {
             )}
           </div>
         </div>
+
+        {/* Tagged Friends */}
+        {taggedFriendNames && taggedFriendNames.length > 0 && (
+          <div className="mb-3">
+            <p className="text-sm text-gray-600">
+              <span className="text-gray-900 font-medium">
+                {entry.user_profile?.display_name || 'User'}
+              </span>
+              {' '}was here with{' '}
+              <span className="text-gray-900 font-medium">
+                {taggedFriendNames.map((friend, index) => {
+                  const name = friend.display_name || `@${friend.username}`;
+                  if (index === 0) return name;
+                  if (index === taggedFriendNames.length - 1) return ` and ${name}`;
+                  return `, ${name}`;
+                }).join('')}
+              </span>
+            </p>
+          </div>
+        )}
 
         {entry.notes && (
           <p className="text-gray-700 text-sm mb-3 leading-relaxed">{entry.notes}</p>

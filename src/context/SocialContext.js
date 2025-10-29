@@ -416,21 +416,36 @@ export const SocialProvider = ({ children }) => {
 
       if (error) throw error;
 
-      // Get entry owner to create notification
+      // Get entry owner and details to create notification
       const { data: entryData } = await supabase
         .from('entries')
-        .select('user_id')
+        .select('user_id, title')
         .eq('id', entryId)
         .single();
 
       if (entryData && entryData.user_id !== user.id) {
+        // Get username of person who liked
+        const { data: profileData } = await supabase
+          .from('user_profiles')
+          .select('username')
+          .eq('id', user.id)
+          .single();
+
+        const username = profileData?.username || 'Someone';
+        const entryTitle = entryData.title || 'your post';
+
         await supabase
           .from('notifications')
           .insert({
             user_id: entryData.user_id,
-            from_user_id: user.id,
-            entry_id: entryId,
-            type: 'like'
+            type: 'like',
+            title: `${username} liked your post! ❤️`,
+            message: `${username} liked your post: ${entryTitle}`,
+            data: {
+              postId: entryId,
+              userId: user.id,
+              username: username
+            }
           });
       }
 
@@ -475,21 +490,36 @@ export const SocialProvider = ({ children }) => {
 
       if (error) throw error;
 
-      // Get entry owner to create notification
+      // Get entry owner and details to create notification
       const { data: entryData } = await supabase
         .from('entries')
-        .select('user_id')
+        .select('user_id, title')
         .eq('id', entryId)
         .single();
 
       if (entryData && entryData.user_id !== user.id) {
+        // Get username of person who saved
+        const { data: profileData } = await supabase
+          .from('user_profiles')
+          .select('username')
+          .eq('id', user.id)
+          .single();
+
+        const username = profileData?.username || 'Someone';
+        const entryTitle = entryData.title || 'your post';
+
         await supabase
           .from('notifications')
           .insert({
             user_id: entryData.user_id,
-            from_user_id: user.id,
-            entry_id: entryId,
-            type: 'entry_save'
+            type: 'entry_save',
+            title: `${username} saved your post! 🔖`,
+            message: `${username} saved your post: ${entryTitle}`,
+            data: {
+              postId: entryId,
+              userId: user.id,
+              username: username
+            }
           });
       }
 
@@ -542,44 +572,44 @@ export const SocialProvider = ({ children }) => {
 
       console.log('Saved entry IDs:', saves);
 
-      // Then fetch the full entry details with user profiles
+      // Fetch entries
       const entryIds = saves.map(save => save.entry_id);
       const { data: entries, error: entriesError } = await supabase
         .from('entries')
-        .select(`
-          id,
-          title,
-          rating,
-          tags,
-          location,
-          photo_url,
-          created_at,
-          user_id,
-          dish_id,
-          user_profiles!entries_user_id_fkey (
-            id,
-            username,
-            display_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .in('id', entryIds);
 
       if (entriesError) {
-        console.error('Error fetching entry details:', entriesError);
+        console.error('Error fetching entries:', entriesError);
         throw entriesError;
       }
 
       console.log('Fetched entries:', entries);
+
+      // Fetch user profiles separately for each entry
+      const userIds = [...new Set(entries?.map(e => e.user_id) || [])];
+      const { data: profiles, error: profilesError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      }
+
+      console.log('Fetched profiles:', profiles);
 
       // Transform the data to match the feed format and maintain save order
       const savedEntries = saves
         .map(save => {
           const entry = entries?.find(e => e.id === save.entry_id);
           if (!entry) return null;
+          
+          const userProfile = profiles?.find(p => p.id === entry.user_id);
+          
           return {
             ...entry,
-            user: entry.user_profiles,
+            user: userProfile,
             isSaved: true
           };
         })
@@ -629,22 +659,31 @@ export const SocialProvider = ({ children }) => {
         // Continue even if profile fetch fails
       }
 
-      // Get entry owner to create notification
+      // Get entry owner and details to create notification
       const { data: entryData } = await supabase
         .from('entries')
-        .select('user_id')
+        .select('user_id, title')
         .eq('id', entryId)
         .single();
 
       if (entryData && entryData.user_id !== user.id) {
+        const username = userProfile?.username || 'Someone';
+        const entryTitle = entryData.title || 'your post';
+        
         await supabase
           .from('notifications')
           .insert({
             user_id: entryData.user_id,
-            from_user_id: user.id,
-            entry_id: entryId,
-            comment_id: data.id,
-            type: 'comment'
+            type: 'comment',
+            title: `${username} commented on your post! 💬`,
+            message: `${username} commented on: ${entryTitle}`,
+            data: {
+              postId: entryId,
+              commentId: data.id,
+              userId: user.id,
+              username: username,
+              commentContent: content.substring(0, 100)
+            }
           });
       }
 

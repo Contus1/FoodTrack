@@ -659,7 +659,15 @@ const Profile = () => {
                   <div
                     key={entry.id}
                     className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer group"
-                    onClick={() => navigate(`/add?edit=${entry.id}`)}
+                    onClick={() => {
+                      // If it's the user's own post, allow editing
+                      if (entry.user_id === user?.id) {
+                        navigate(`/add?edit=${entry.id}`);
+                      } else {
+                        // Otherwise, navigate to view-only mode
+                        navigate(`/add?view=${entry.id}`);
+                      }
+                    }}
                   >
                     {entry.photo_url ? (
                       <img

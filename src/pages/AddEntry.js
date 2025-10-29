@@ -7,14 +7,20 @@ import StarRating from '../components/StarRating';
 import LocationAutocomplete from '../components/LocationAutocomplete';
 import { compressImage, shouldCompress } from '../utils/imageOptimization';
 import { getOrCreateDish } from '../utils/dishManager';
+import supabase from '../utils/supabaseClient';
+import { useSocial } from '../context/SocialContext';
 
 const AddEntry = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addEntry, updateEntry, uploadImage, entries, deleteEntry } = useEntries();
+  const { friends } = useSocial();
   const [searchParams] = useSearchParams();
   const editId = searchParams.get('edit');
+  const viewId = searchParams.get('view');
   const isEditing = !!editId;
+  const isViewing = !!viewId;
+  const entryId = editId || viewId;
   
   const [formData, setFormData] = useState({
     title: '',
@@ -24,33 +30,85 @@ const AddEntry = () => {
     location: '',
     photo_url: '',
     is_private: false, // Default to public posts
+    tagged_friends: [], // Array of friend user IDs
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [compressing, setCompressing] = useState(false);
 
-  // Load entry data for editing
+  // Debug friends data
   useEffect(() => {
-    console.log('Edit effect triggered:', { isEditing, editId, entriesLength: entries.length });
-    if (isEditing && entries.length > 0) {
-      const entryToEdit = entries.find(entry => entry.id === editId);
-      console.log('Entry to edit:', entryToEdit);
-      if (entryToEdit) {
-        setFormData({
-          title: entryToEdit.title || '',
-          rating: entryToEdit.rating || 10,
-          tags: entryToEdit.tags || [],
-          notes: entryToEdit.notes || '',
-          location: entryToEdit.location || '',
-          photo_url: entryToEdit.photo_url || '',
-          is_private: entryToEdit.is_private || false,
-        });
-        console.log('Form data set for editing');
-      } else {
-        console.log('Entry not found with ID:', editId);
+    console.log('Friends data in AddEntry:', friends);
+    console.log('Friends count:', friends?.length);
+  }, [friends]);
+
+  // Load entry data for editing or viewing
+  useEffect(() => {
+    const loadEntry = async () => {
+      console.log('Edit/View effect triggered:', { isEditing, isViewing, entryId, entriesLength: entries.length });
+      
+      // For viewing mode, fetch directly from database (might be someone else's entry)
+      if (isViewing && entryId) {
+        try {
+          console.log('Fetching entry from database for viewing:', entryId);
+          const { data, error } = await supabase
+            .from('entries')
+            .select('*')
+            .eq('id', entryId)
+            .single();
+          
+          if (error) {
+            console.error('Error fetching entry:', error);
+            alert('Could not load entry');
+            navigate(-1);
+            return;
+          }
+          
+          if (data) {
+            console.log('Loaded entry for viewing:', data);
+            setFormData({
+              title: data.title || '',
+              rating: data.rating || 10,
+              tags: data.tags || [],
+              notes: data.notes || '',
+              location: data.location || '',
+              photo_url: data.photo_url || '',
+              is_private: data.is_private || false,
+              tagged_friends: data.tagged_friends || [],
+            });
+          }
+        } catch (error) {
+          console.error('Error loading entry:', error);
+          alert('Could not load entry');
+          navigate(-1);
+        }
+        return;
       }
-    }
-  }, [isEditing, editId, entries]);
+      
+      // For editing mode, use entries from context (only your own entries)
+      if (isEditing && entries.length > 0) {
+        const entryToLoad = entries.find(entry => entry.id === entryId);
+        console.log('Entry to edit from context:', entryToLoad);
+        if (entryToLoad) {
+          setFormData({
+            title: entryToLoad.title || '',
+            rating: entryToLoad.rating || 10,
+            tags: entryToLoad.tags || [],
+            notes: entryToLoad.notes || '',
+            location: entryToLoad.location || '',
+            photo_url: entryToLoad.photo_url || '',
+            is_private: entryToLoad.is_private || false,
+            tagged_friends: entryToLoad.tagged_friends || [],
+          });
+          console.log('Form data set for editing');
+        } else {
+          console.log('Entry not found with ID:', entryId);
+        }
+      }
+    };
+    
+    loadEntry();
+  }, [isEditing, isViewing, entryId, entries, navigate]);
 
   const commonTags = ['Spicy', 'Sweet', 'Savory', 'Vegetarian', 'Vegan', 'Healthy', 'Comfort Food', 'Asian', 'Italian', 'Mexican'];
 
@@ -197,7 +255,7 @@ const AddEntry = () => {
             <div className="flex items-center space-x-4">
               <div className="w-1 h-8 bg-black rounded-full"></div>
               <h1 className="text-xl font-light tracking-wide text-black">
-                {isEditing ? 'Edit Entry' : 'New Creation'}
+                {isViewing ? 'View Entry' : isEditing ? 'Edit Entry' : 'New Creation'}
               </h1>
             </div>
             <div className="w-11"></div>
@@ -220,29 +278,33 @@ const AddEntry = () => {
                     alt="Preview"
                     className="w-full h-48 object-cover rounded-lg"
                   />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 flex items-center justify-center rounded-lg">
+                  {!isViewing && (
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 flex items-center justify-center rounded-lg">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        id="photo-upload"
+                      />
+                      <span className="opacity-0 group-hover:opacity-100 text-white font-medium text-sm transition-all duration-200">
+                        Change Photo
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center group cursor-pointer hover:border-gray-400 transition-colors relative">
+                  {!isViewing && (
                     <input
                       type="file"
                       accept="image/*"
                       onChange={handleImageUpload}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      id="photo-upload"
+                      id="photo-upload-empty"
+                      disabled={compressing}
                     />
-                    <span className="opacity-0 group-hover:opacity-100 text-white font-medium text-sm transition-all duration-200">
-                      Change Photo
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center group cursor-pointer hover:border-gray-400 transition-colors relative">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    id="photo-upload-empty"
-                    disabled={compressing}
-                  />
+                  )}
                   {compressing ? (
                     <div className="text-center">
                       <div className="w-10 h-10 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
@@ -254,7 +316,7 @@ const AddEntry = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                       <p className="text-gray-500 group-hover:text-gray-700 transition-colors">
-                        Click to add photo
+                        {isViewing ? 'No photo' : 'Click to add photo'}
                       </p>
                     </div>
                   )}
@@ -273,7 +335,8 @@ const AddEntry = () => {
               required
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              className="w-full text-lg font-medium text-black border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+              disabled={isViewing}
+              className="w-full text-lg font-medium text-black border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all disabled:bg-gray-50 disabled:text-gray-700"
               placeholder="What did you eat?"
             />
           </div>
@@ -285,7 +348,8 @@ const AddEntry = () => {
             </label>
             <StarRating
               value={formData.rating}
-              onRatingChange={(rating) => setFormData(prev => ({ ...prev, rating }))}
+              onRatingChange={isViewing ? null : (rating) => setFormData(prev => ({ ...prev, rating }))}
+              readonly={isViewing}
             />
           </div>
 
@@ -299,12 +363,13 @@ const AddEntry = () => {
                 <button
                   key={tag}
                   type="button"
-                  onClick={() => handleTagToggle(tag)}
+                  onClick={() => !isViewing && handleTagToggle(tag)}
+                  disabled={isViewing}
                   className={`px-3 py-1 text-sm rounded-full transition-colors ${
                     formData.tags.includes(tag)
                       ? 'bg-black text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  } ${isViewing ? 'cursor-default' : ''}`}
                 >
                   {tag}
                 </button>
@@ -319,11 +384,83 @@ const AddEntry = () => {
             </label>
             <LocationAutocomplete
               value={formData.location}
-              onChange={(value) => setFormData(prev => ({ ...prev, location: value }))}
+              onChange={isViewing ? null : (value) => setFormData(prev => ({ ...prev, location: value }))}
               placeholder="Where did you enjoy this?"
               className="w-full"
+              disabled={isViewing}
             />
           </div>
+
+          {/* Tag Friends */}
+          {!isViewing && friends && friends.length > 0 && (
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">
+                With Friends
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {friends.map(friendship => {
+                  const friend = friendship.friend;
+                  if (!friend) return null;
+                  
+                  const isTagged = formData.tagged_friends?.includes(friend.id);
+                  return (
+                    <button
+                      key={friend.id}
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          tagged_friends: isTagged
+                            ? prev.tagged_friends.filter(id => id !== friend.id)
+                            : [...(prev.tagged_friends || []), friend.id]
+                        }));
+                      }}
+                      className={`flex items-center space-x-2 px-3 py-2 rounded-full transition-colors ${
+                        isTagged
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {friend.avatar_url ? (
+                        <img 
+                          src={friend.avatar_url} 
+                          alt={friend.display_name}
+                          className="w-5 h-5 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center text-xs text-white">
+                          {friend.display_name?.charAt(0)?.toUpperCase() || 'F'}
+                        </div>
+                      )}
+                      <span className="text-sm">{friend.display_name || friend.username}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Display Tagged Friends in View Mode */}
+          {isViewing && formData.tagged_friends && formData.tagged_friends.length > 0 && (
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">
+                With Friends
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {formData.tagged_friends.map(friendId => {
+                  // Find friend info (this would need to be fetched)
+                  return (
+                    <div
+                      key={friendId}
+                      className="flex items-center space-x-2 px-3 py-2 rounded-full bg-gray-100 text-gray-700"
+                    >
+                      <span className="text-sm">Friend</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Notes */}
           <div className="space-y-3">
@@ -333,42 +470,58 @@ const AddEntry = () => {
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              disabled={isViewing}
               rows={3}
-              className="w-full text-gray-700 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all resize-none"
+              className="w-full text-gray-700 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all resize-none disabled:bg-gray-50"
               placeholder="How was it? Any notes?"
             />
           </div>
 
           {/* Submit Buttons */}
-          <div className="space-y-3 pt-4">
-            <div className="flex gap-3">
+          {!isViewing && (
+            <div className="space-y-3 pt-4">
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => navigate('/')}
+                  className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                >
+                  {loading ? 'Saving...' : 'Save Entry'}
+                </button>
+              </div>
+              
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={loading}
+                  className="w-full py-3 border-2 border-red-500 text-red-500 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors font-medium"
+                >
+                  {loading ? 'Deleting...' : 'Delete Entry'}
+                </button>
+              )}
+            </div>
+          )}
+          
+          {/* View-only mode close button */}
+          {isViewing && (
+            <div className="pt-4">
               <button
                 type="button"
-                onClick={() => navigate('/')}
-                className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                onClick={() => navigate(-1)}
+                className="w-full py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
               >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
-              >
-                {loading ? 'Saving...' : 'Save Entry'}
+                Close
               </button>
             </div>
-            
-            {isEditing && (
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={loading}
-                className="w-full py-3 border-2 border-red-500 text-red-500 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors font-medium"
-              >
-                {loading ? 'Deleting...' : 'Delete Entry'}
-              </button>
-            )}
-          </div>
+          )}
         </form>
       </main>
       
