@@ -239,21 +239,21 @@ const AddEntry = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-16">
-      {/* Sophisticated Header */}
-      <div className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-gray-100 z-10">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 pb-16">
+      {/* Sophisticated Header with Glass */}
+      <div className="sticky top-0 glass-header z-10">
         <div className="max-w-4xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <button
               onClick={() => navigate('/')}
-              className="w-11 h-11 flex items-center justify-center text-gray-600 hover:text-black hover:bg-gray-50 rounded-full transition-all duration-200"
+              className="w-11 h-11 flex items-center justify-center text-gray-600 hover:text-black glass-button rounded-full interaction-smooth"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
               </svg>
             </button>
             <div className="flex items-center space-x-4">
-              <div className="w-1 h-8 bg-black rounded-full"></div>
+              <div className="w-1 h-8 bg-gradient-to-b from-gray-900 to-black rounded-full shadow-sm"></div>
               <h1 className="text-xl font-light tracking-wide text-black">
                 {isViewing ? 'View Entry' : isEditing ? 'Edit Entry' : 'New Creation'}
               </h1>
@@ -276,10 +276,10 @@ const AddEntry = () => {
                   <img
                     src={formData.photo_url}
                     alt="Preview"
-                    className="w-full h-48 object-cover rounded-lg"
+                    className="w-full h-48 object-cover rounded-2xl shadow-md"
                   />
                   {!isViewing && (
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 flex items-center justify-center rounded-lg">
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 interaction-smooth flex items-center justify-center rounded-2xl backdrop-blur-0 group-hover:backdrop-blur-sm">
                       <input
                         type="file"
                         accept="image/*"
@@ -287,14 +287,14 @@ const AddEntry = () => {
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                         id="photo-upload"
                       />
-                      <span className="opacity-0 group-hover:opacity-100 text-white font-medium text-sm transition-all duration-200">
+                      <span className="opacity-0 group-hover:opacity-100 text-white font-medium text-sm transition-all duration-200 drop-shadow-md">
                         Change Photo
                       </span>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center group cursor-pointer hover:border-gray-400 transition-colors relative">
+                <div className="h-48 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center group cursor-pointer hover:border-gray-400 interaction-smooth relative glass-panel-light">
                   {!isViewing && (
                     <input
                       type="file"
@@ -336,7 +336,7 @@ const AddEntry = () => {
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
               disabled={isViewing}
-              className="w-full text-lg font-medium text-black border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all disabled:bg-gray-50 disabled:text-gray-700"
+              className="w-full text-lg font-medium text-black border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black interaction-smooth disabled:bg-gray-50 disabled:text-gray-700 shadow-sm"
               placeholder="What did you eat?"
             />
           </div>
@@ -365,10 +365,10 @@ const AddEntry = () => {
                   type="button"
                   onClick={() => !isViewing && handleTagToggle(tag)}
                   disabled={isViewing}
-                  className={`px-3 py-1 text-sm rounded-full transition-colors ${
+                  className={`px-3 py-1 text-sm rounded-full interaction-smooth ${
                     formData.tags.includes(tag)
-                      ? 'bg-black text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-black text-white shadow-md'
+                      : 'glass-panel-light text-gray-700 hover:bg-white/60'
                   } ${isViewing ? 'cursor-default' : ''}`}
                 >
                   {tag}
@@ -415,10 +415,10 @@ const AddEntry = () => {
                             : [...(prev.tagged_friends || []), friend.id]
                         }));
                       }}
-                      className={`flex items-center space-x-2 px-3 py-2 rounded-full transition-colors ${
+                      className={`flex items-center space-x-2 px-3 py-2 rounded-full interaction-smooth ${
                         isTagged
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          ? 'bg-blue-500 text-white shadow-md'
+                          : 'glass-panel-light text-gray-700 hover:bg-white/60'
                       }`}
                     >
                       {friend.avatar_url ? (
@@ -452,7 +452,7 @@ const AddEntry = () => {
                   return (
                     <div
                       key={friendId}
-                      className="flex items-center space-x-2 px-3 py-2 rounded-full bg-gray-100 text-gray-700"
+                      className="flex items-center space-x-2 px-3 py-2 rounded-full glass-panel-light text-gray-700"
                     >
                       <span className="text-sm">Friend</span>
                     </div>
@@ -472,39 +472,63 @@ const AddEntry = () => {
               onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
               disabled={isViewing}
               rows={3}
-              className="w-full text-gray-700 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all resize-none disabled:bg-gray-50"
+              className="w-full text-gray-700 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black interaction-smooth resize-none disabled:bg-gray-50 shadow-sm"
               placeholder="How was it? Any notes?"
             />
           </div>
 
-          {/* Submit Buttons */}
+          {/* Submit Buttons - iOS Control Center Style */}
           {!isViewing && (
-            <div className="space-y-3 pt-4">
-              <div className="flex gap-3">
+            <div className="space-y-4 pt-4">
+              <div className="flex gap-4">
+                {/* Cancel Button - Glass */}
                 <button
                   type="button"
                   onClick={() => navigate('/')}
-                  className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 py-4 glass-panel text-gray-700 rounded-2xl interaction-smooth backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] hover:shadow-[0_12px_48px_rgba(0,0,0,0.12)] font-medium"
                 >
                   Cancel
                 </button>
+                
+                {/* Save Button - Glass with emphasis */}
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                  className="flex-1 py-4 glass-panel text-black rounded-2xl disabled:opacity-50 interaction-smooth backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_48px_rgba(0,0,0,0.25)] font-semibold border border-white/20"
                 >
-                  {loading ? 'Saving...' : 'Save Entry'}
+                  {loading ? (
+                    <span className="flex items-center justify-center space-x-2">
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Saving...</span>
+                    </span>
+                  ) : (
+                    'Save Entry'
+                  )}
                 </button>
               </div>
               
+              {/* Delete Button - Glass with red tint */}
               {isEditing && (
                 <button
                   type="button"
                   onClick={handleDelete}
                   disabled={loading}
-                  className="w-full py-3 border-2 border-red-500 text-red-500 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors font-medium"
+                  className="w-full py-4 glass-panel text-red-600 rounded-2xl disabled:opacity-50 interaction-smooth backdrop-blur-xl shadow-[0_8px_32px_rgba(220,38,38,0.15)] hover:shadow-[0_12px_48px_rgba(220,38,38,0.25)] font-medium border border-red-500/20"
                 >
-                  {loading ? 'Deleting...' : 'Delete Entry'}
+                  {loading ? (
+                    <span className="flex items-center justify-center space-x-2">
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Deleting...</span>
+                    </span>
+                  ) : (
+                    'Delete Entry'
+                  )}
                 </button>
               )}
             </div>
@@ -516,7 +540,7 @@ const AddEntry = () => {
               <button
                 type="button"
                 onClick={() => navigate(-1)}
-                className="w-full py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+                className="w-full py-4 glass-panel text-black rounded-2xl interaction-smooth backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_48px_rgba(0,0,0,0.25)] font-semibold border border-white/20"
               >
                 Close
               </button>

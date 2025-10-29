@@ -57,7 +57,7 @@ const BottomNavigation = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-100 z-20">
+    <nav className="fixed bottom-0 left-0 right-0 glass-header z-20">
       <div className="max-w-4xl mx-auto px-4">
         <div className="flex items-center justify-around py-3">
           {navItems.map((item) => {
@@ -66,7 +66,7 @@ const BottomNavigation = () => {
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className="flex flex-col items-center space-y-1 py-2 px-3 transition-all duration-200"
+                className="flex flex-col items-center space-y-1 py-2 px-3 interaction-smooth hover:scale-105"
               >
                 {item.icon(active)}
                 <span className={`text-xs font-light tracking-wide ${

@@ -46,7 +46,7 @@ const EntryCard = ({ entry, viewMode = 'list' }) => {
         )}
         
         {/* Image */}
-        <div className="relative overflow-hidden bg-gray-50 aspect-[4/5] rounded-lg">
+        <div className="relative overflow-hidden bg-gray-50 aspect-[4/5] rounded-xl shadow-sm">
           {entry.photo_url ? (
             <OptimizedImage
               src={entry.photo_url}
@@ -61,39 +61,39 @@ const EntryCard = ({ entry, viewMode = 'list' }) => {
             </div>
           )}
           
-          {/* Overlay Info */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
+          {/* Overlay Info with Glass Effect */}
+          <div className="absolute inset-0 glass-image-overlay opacity-0 group-hover:opacity-100 interaction-smooth">
             <div className="absolute bottom-4 left-4 right-4">
-              <h3 className="text-white font-light text-lg mb-1 truncate">
+              <h3 className="text-white font-light text-lg mb-1 truncate drop-shadow-sm">
                 {entry.title}
               </h3>
               {entry.location && (
-                <p className="text-white/80 text-xs font-light truncate">
+                <p className="text-white/90 text-xs font-light truncate drop-shadow-sm">
                   {entry.location}
                 </p>
               )}
             </div>
           </div>
           
-          {/* Rating & Menu */}
+          {/* Rating & Menu with Glass */}
           <div className="absolute top-3 right-3 flex items-center space-x-2">
-            <div className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full">
+            <div className="glass-badge px-2 py-1 rounded-full">
               <StarRating value={entry.rating} readonly size="sm" />
             </div>
             <div className="relative">
               <button
                 onClick={() => setShowMenu(!showMenu)}
-                className="w-7 h-7 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors"
+                className="w-7 h-7 glass-button rounded-full flex items-center justify-center interaction-smooth"
               >
                 <svg className="w-3 h-3 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
                 </svg>
               </button>
               {showMenu && (
-                <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-xl py-1 z-10 min-w-[100px]">
+                <div className="absolute right-0 top-8 glass-panel rounded-xl py-1 z-10 min-w-[100px]">
                   <button
                     onClick={handleEdit}
-                    className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                    className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-white/40 interaction-smooth flex items-center space-x-2"
                   >
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
@@ -102,7 +102,7 @@ const EntryCard = ({ entry, viewMode = 'list' }) => {
                   </button>
                   <button
                     onClick={handleDelete}
-                    className="w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50 flex items-center space-x-2"
+                    className="w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50/60 interaction-smooth flex items-center space-x-2"
                   >
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
@@ -137,7 +137,7 @@ const EntryCard = ({ entry, viewMode = 'list' }) => {
 
   // List view (default)
   return (
-    <article className="group cursor-pointer relative bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300">
+    <article className="group cursor-pointer relative glass-card rounded-2xl overflow-hidden glass-panel-hover">
       {/* Click outside to close menu */}
       {showMenu && (
         <div 
@@ -162,25 +162,25 @@ const EntryCard = ({ entry, viewMode = 'list' }) => {
           </div>
         )}
         
-        {/* Rating & Menu */}
+        {/* Rating & Menu with Glass */}
         <div className="absolute top-4 right-4 flex items-center space-x-3">
-          <div className="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-full">
+          <div className="glass-badge px-3 py-2 rounded-full">
             <StarRating value={entry.rating} readonly size="sm" />
           </div>
           <div className="relative">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors shadow-sm"
+              className="w-9 h-9 glass-button rounded-full flex items-center justify-center interaction-smooth"
             >
               <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
               </svg>
             </button>
             {showMenu && (
-              <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-xl shadow-xl py-2 z-10 min-w-[120px]">
+              <div className="absolute right-0 top-10 glass-panel rounded-2xl py-2 z-10 min-w-[120px]">
                 <button
                   onClick={handleEdit}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3"
+                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-white/40 interaction-smooth flex items-center space-x-3"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
@@ -189,7 +189,7 @@ const EntryCard = ({ entry, viewMode = 'list' }) => {
                 </button>
                 <button
                   onClick={handleDelete}
-                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-3"
+                  className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50/60 interaction-smooth flex items-center space-x-3"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
@@ -203,7 +203,7 @@ const EntryCard = ({ entry, viewMode = 'list' }) => {
       </div>
 
       {/* Content */}
-      <div className="p-6">
+      <div className="p-6 bg-white/60">
         {/* Title & Date */}
         <div className="flex items-start justify-between mb-3">
           <h3 className="text-xl font-light text-black leading-tight flex-1 pr-4">
@@ -236,7 +236,7 @@ const EntryCard = ({ entry, viewMode = 'list' }) => {
         {entry.tags && entry.tags.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {entry.tags.slice(0, 4).map((tag, index) => (
-              <span key={index} className="px-3 py-1 text-xs bg-gray-50 text-gray-600 rounded-full font-light">
+              <span key={index} className="px-3 py-1 text-xs glass-panel-light text-gray-600 rounded-full font-light">
                 {tag}
               </span>
             ))}

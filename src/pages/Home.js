@@ -37,33 +37,38 @@ const Home = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
-      {/* Header */}
-      <div className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-gray-100 z-10">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 pb-16">
+      {/* Header with Liquid Glass */}
+      <div className="sticky top-0 glass-header z-10">
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 md:space-x-4">
-              <div className="w-1 h-6 md:h-8 bg-black rounded-full"></div>
-              <h1 className="text-xl md:text-2xl font-light tracking-wide text-black">
-                FoodTrack
-              </h1>
+              <div className="w-1 h-6 md:h-8 bg-gradient-to-b from-gray-900 to-black rounded-full shadow-sm"></div>
+              <div>
+                <h1 className="text-xl md:text-2xl font-light tracking-wide text-black">
+                  FoodTrack
+                </h1>
+                <p className="text-[9px] text-gray-400 mt-0.5 tracking-wide">
+                  Made with love in Korea
+                </p>
+              </div>
             </div>
             
             <div className="flex items-center space-x-3 md:space-x-4">
-              {/* Add Entry Button */}
+              {/* Add Entry Button - iOS Control Center Style */}
               <button
                 onClick={() => navigate('/add')}
-                className="w-9 h-9 md:w-10 md:h-10 bg-black text-white rounded-full flex items-center justify-center hover:bg-gray-800 transition-all duration-300 shadow-md hover:shadow-lg"
+                className="w-11 h-11 md:w-12 md:h-12 glass-panel rounded-full flex items-center justify-center hover:bg-white/90 interaction-smooth shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:shadow-[0_12px_48px_rgba(0,0,0,0.18)] backdrop-blur-xl"
               >
-                <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <svg className="w-5 h-5 md:w-6 md:h-6 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
               </button>
               
-              {/* Profile Avatar */}
+              {/* Profile Avatar with Glass Ring */}
               <button
                 onClick={() => navigate('/profile')}
-                className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden bg-gray-100"
+                className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden bg-gray-100 ring-2 ring-white/50 shadow-sm hover:ring-white/80 interaction-smooth"
               >
                 {userProfile?.avatar_url ? (
                   <img
@@ -84,7 +89,7 @@ const Home = () => {
           <div className="flex mt-3 md:mt-4 space-x-6 md:space-x-8">
             <button
               onClick={() => setActiveTab('feed')}
-              className={`relative py-2 px-1 text-sm font-medium transition-colors ${
+              className={`relative py-2 px-1 text-sm font-medium interaction-smooth ${
                 activeTab === 'feed'
                   ? 'text-black border-b-2 border-black'
                   : 'text-gray-500 hover:text-gray-700'
@@ -94,7 +99,7 @@ const Home = () => {
             </button>
             <button
               onClick={() => setActiveTab('friends')}
-              className={`relative py-2 px-1 text-sm font-medium transition-colors ${
+              className={`relative py-2 px-1 text-sm font-medium interaction-smooth ${
                 activeTab === 'friends'
                   ? 'text-black border-b-2 border-black'
                   : 'text-gray-500 hover:text-gray-700'
@@ -102,7 +107,7 @@ const Home = () => {
             >
               Friends
               {showNotificationBadge && (
-                <span className="absolute -top-1 -right-2 w-3 h-3 bg-red-500 rounded-full"></span>
+                <span className="absolute -top-1 -right-2 w-3 h-3 bg-red-500 rounded-full shadow-sm animate-float-gentle"></span>
               )}
             </button>
           </div>

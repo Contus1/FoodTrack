@@ -2,6 +2,8 @@
 
 A sophisticated social media platform for food enthusiasts to document, share, and discover culinary experiences with friends. Built with React, Tailwind CSS, and Supabase.
 
+**✨ Now featuring the Liquid Glass design system** - A refined iOS 26-inspired aesthetic with subtle translucency, depth, and luminous surfaces. See [LIQUID_GLASS_DESIGN.md](LIQUID_GLASS_DESIGN.md) for details.
+
 ## ✨ Revolutionary Features
 
 ### 🌟 Social Media Integration
@@ -126,6 +128,7 @@ A sophisticated social media platform for food enthusiasts to document, share, a
 ### Frontend
 - **React 18**: Modern UI framework with hooks
 - **Tailwind CSS**: Utility-first styling with custom animations
+- **Liquid Glass Design System**: iOS 26-inspired aesthetic with translucency and depth
 - **React Router**: Client-side routing
 - **Context API**: State management for auth, entries, and social features
 
@@ -152,6 +155,7 @@ A sophisticated social media platform for food enthusiasts to document, share, a
 ## 🔮 Roadmap
 
 ### Recently Added ✅
+- [x] Liquid Glass Design System (iOS 26-inspired UI)
 - [x] PWA Support with Service Workers
 - [x] Push Notifications System
 - [x] Real-time In-App Notifications
