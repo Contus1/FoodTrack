@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Leaflet CSS Import */
+@import 'leaflet/dist/leaflet.css';
+
 /* ================================
    Liquid Glass Design System
    iOS 26 Inspired - Subtle Enhancement

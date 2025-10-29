@@ -132,7 +132,7 @@ const Insights = () => {
   const { user } = useAuth();
   const { entries, loading } = useEntries();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('social');
+  const [activeTab, setActiveTab] = useState('classic');
 
   // Calculate insights from entries
   const insights = useMemo(() => {
@@ -224,8 +224,8 @@ const Insights = () => {
   }
 
   const tabs = [
-    { id: 'social', label: 'Social Insights', icon: '👥' },
-    { id: 'classic', label: 'Classic Analytics', icon: '📊' },
+    { id: 'classic', label: 'Classic Analytics', icon: '�' },
+    { id: 'social', label: 'Social Insights', icon: '�' },
     { id: 'achievements', label: 'Achievements', icon: '🏆' }
   ];
 
@@ -445,7 +445,17 @@ const Insights = () => {
                     Culinary Journey Map
                   </h3>
                   <div className="h-64 sm:h-96">
-                    <SimpleMap entries={insights.entries} />
+                    <SimpleMap locations={
+                      // Transform entries into location counts
+                      Object.entries(
+                        insights.entries.reduce((acc, entry) => {
+                          if (entry.location) {
+                            acc[entry.location] = (acc[entry.location] || 0) + 1;
+                          }
+                          return acc;
+                        }, {})
+                      ).map(([name, count]) => ({ name, count }))
+                    } />
                   </div>
                 </div>
 
