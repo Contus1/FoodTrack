@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useEntries } from "../context/EntriesContext";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,9 @@ const RecommendationsPage = () => {
   const { entries, loading } = useEntries();
   const navigate = useNavigate();
 
+  // Check if user has enough entries to unlock
+  const isUnlocked = useMemo(() => entries.length >= 5, [entries]);
+
   useEffect(() => {
     if (!user) {
       navigate("/login");
@@ -17,6 +20,91 @@ const RecommendationsPage = () => {
   }, [user, navigate]);
 
   if (!user) return null;
+
+  // Show locked state if less than 5 entries
+  if (!isUnlocked) {
+    const remaining = 5 - entries.length;
+    return (
+      <div className="min-h-screen bg-white pb-16">
+        {/* Header */}
+        <div className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-gray-100 z-10">
+          <div className="max-w-4xl mx-auto px-6 py-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-1 h-8 bg-black rounded-full"></div>
+                <h1 className="text-xl font-light tracking-wide text-black">
+                  Discover
+                </h1>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                <span className="text-xs text-gray-400 font-light tracking-wider uppercase">
+                  Locked
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <main className="container mx-auto px-6 py-16 max-w-2xl">
+          <div className="text-center">
+            {/* Lock Icon */}
+            <div className="w-24 h-24 mx-auto mb-8 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center relative">
+              <svg
+                className="w-12 h-12 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+                />
+              </svg>
+              <div className="absolute -top-1 -right-1 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center text-xs font-bold text-white">
+                {remaining}
+              </div>
+            </div>
+
+            <h2 className="text-2xl font-light text-black mb-3">
+              Almost There!
+            </h2>
+            <p className="text-gray-600 mb-2">
+              Add <span className="font-medium text-black">{remaining} more {remaining === 1 ? 'dish' : 'dishes'}</span> to unlock personalized recommendations
+            </p>
+            <p className="text-sm text-gray-500 mb-8">
+              We need to understand your taste profile first
+            </p>
+
+            {/* Progress Bar */}
+            <div className="max-w-xs mx-auto mb-8">
+              <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-500"
+                  style={{ width: `${(entries.length / 5) * 100}%` }}
+                />
+              </div>
+              <div className="flex justify-between mt-2 text-xs text-gray-500">
+                <span>{entries.length}/5 entries</span>
+                <span>{Math.round((entries.length / 5) * 100)}%</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => navigate("/add")}
+              className="px-8 py-3 bg-black text-white rounded-full font-medium hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl"
+            >
+              Add More Dishes
+            </button>
+          </div>
+        </main>
+
+        <BottomNavigation />
+      </div>
+    );
+  }
 
   if (loading) {
     return (

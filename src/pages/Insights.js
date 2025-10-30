@@ -144,7 +144,7 @@ const generateKeyInsights = (analysis, entries) => {
     insights.push({
       icon: emoji,
       title: period,
-      subtitle: "Prime Time",
+      subtitle: "Times you post most",
       value: `${Math.round((count / entries.length) * 100)}%`,
       rating: null,
     });
@@ -231,9 +231,9 @@ const Insights = () => {
   }
 
   const tabs = [
-    { id: "snapshot", label: "Snapshot", icon: "�" },
-    { id: "social", label: "DNA Match", icon: "🧬" },
-    { id: "achievements", label: "Wins", icon: "🏆" },
+    { id: "snapshot", label: "Snapshot", icon: "" },
+    { id: "social", label: "DNA Match", icon: "" },
+    { id: "achievements", label: "Wins", icon: "" },
   ];
 
   return (
@@ -277,7 +277,6 @@ const Insights = () => {
                     : "text-gray-500 hover:text-gray-700"
                 }`}
               >
-                <span className="mr-1">{tab.icon}</span>
                 <span>{tab.label}</span>
               </button>
             ))}

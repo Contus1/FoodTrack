@@ -3,6 +3,115 @@ import { useNavigate } from "react-router-dom";
 import { FoodRecommendationEngine } from "../utils/recommendationEngine";
 import { useEntries } from "../context/EntriesContext";
 
+// Mock restaurant data for monetization (will be replaced with real API later)
+const MOCK_RESTAURANTS = {
+  spicy: [
+    { name: "Masala House", cuisine: "Indian", address: "Kreuzberg, Berlin", price: "€€", rating: 4.7, tags: ["Spicy", "Authentic", "Vegetarian Options"] },
+    { name: "El Fuego", cuisine: "Mexican", address: "Mitte, Berlin", price: "€€", rating: 4.5, tags: ["Spicy", "Tacos", "Cocktails"] },
+    { name: "Thai Chili", cuisine: "Thai", address: "Prenzlauer Berg, Berlin", price: "€", rating: 4.6, tags: ["Spicy", "Curry", "Fresh"] },
+  ],
+  sweet: [
+    { name: "Patisserie Belle", cuisine: "French", address: "Charlottenburg, Berlin", price: "€€€", rating: 4.8, tags: ["Desserts", "Pastries", "Elegant"] },
+    { name: "Sugar Rush Café", cuisine: "American", address: "Friedrichshain, Berlin", price: "€€", rating: 4.4, tags: ["Pancakes", "Waffles", "Brunch"] },
+    { name: "Dolce Vita", cuisine: "Italian", address: "Mitte, Berlin", price: "€€", rating: 4.6, tags: ["Gelato", "Tiramisu", "Cozy"] },
+  ],
+  savory: [
+    { name: "Steakhouse Berlin", cuisine: "Steakhouse", address: "Charlottenburg, Berlin", price: "€€€", rating: 4.7, tags: ["Meat", "Premium", "Wine"] },
+    { name: "Ramen Ya", cuisine: "Japanese", address: "Kreuzberg, Berlin", price: "€€", rating: 4.5, tags: ["Ramen", "Authentic", "Quick"] },
+    { name: "Burger Meister", cuisine: "Burgers", address: "Kreuzberg, Berlin", price: "€", rating: 4.6, tags: ["Burgers", "Casual", "Local"] },
+  ],
+  healthy: [
+    { name: "Green Leaf", cuisine: "Vegan", address: "Mitte, Berlin", price: "€€", rating: 4.6, tags: ["Vegan", "Organic", "Bowls"] },
+    { name: "Fresh & Fit", cuisine: "Healthy", address: "Prenzlauer Berg, Berlin", price: "€€", rating: 4.5, tags: ["Salads", "Smoothies", "Gluten-Free"] },
+    { name: "The Juice Bar", cuisine: "Juice Bar", address: "Friedrichshain, Berlin", price: "€", rating: 4.4, tags: ["Juices", "Açaí", "Raw"] },
+  ],
+};
+
+const SponsoredRestaurants = ({ userProfile }) => {
+  const restaurants = useMemo(() => {
+    if (!userProfile || !userProfile.tagFrequency) return [];
+
+    // Analyze user's flavor preferences
+    const flavorTags = userProfile.tagFrequency;
+    let selectedCategory = "savory"; // default
+
+    // Determine primary taste profile
+    const spicyTerms = ["spicy", "hot", "chili", "thai", "indian", "mexican", "szechuan"];
+    const sweetTerms = ["sweet", "dessert", "cake", "chocolate", "pastry"];
+    const healthyTerms = ["healthy", "vegan", "vegetarian", "salad", "organic"];
+    
+    const spicyScore = spicyTerms.reduce((sum, term) => sum + (flavorTags[term] || 0), 0);
+    const sweetScore = sweetTerms.reduce((sum, term) => sum + (flavorTags[term] || 0), 0);
+    const healthyScore = healthyTerms.reduce((sum, term) => sum + (flavorTags[term] || 0), 0);
+
+    if (spicyScore > sweetScore && spicyScore > healthyScore) {
+      selectedCategory = "spicy";
+    } else if (sweetScore > spicyScore && sweetScore > healthyScore) {
+      selectedCategory = "sweet";
+    } else if (healthyScore > spicyScore && healthyScore > sweetScore) {
+      selectedCategory = "healthy";
+    }
+
+    return MOCK_RESTAURANTS[selectedCategory] || MOCK_RESTAURANTS.savory;
+  }, [userProfile]);
+
+  if (!restaurants || restaurants.length === 0) return null;
+
+  return (
+    <div className="bg-white rounded-lg p-4 border border-gray-200">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h4 className="font-medium text-gray-900 text-sm">Restaurants Near You</h4>
+          <p className="text-xs text-gray-500 mt-0.5">Handpicked based on your taste</p>
+        </div>
+        <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded border border-amber-200">
+          Sponsored
+        </span>
+      </div>
+
+      <div className="space-y-2">
+        {restaurants.map((restaurant, index) => (
+          <div
+            key={index}
+            className="p-3 border border-gray-100 rounded-lg hover:border-gray-300 transition-colors group cursor-pointer"
+          >
+            <div className="flex items-start justify-between mb-1">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <h5 className="font-medium text-gray-900 text-sm">
+                    {restaurant.name}
+                  </h5>
+                  <span className="text-xs text-gray-500">{restaurant.price}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-1.5">
+                  <span>{restaurant.cuisine}</span>
+                  <span className="text-gray-300">•</span>
+                  <span>{restaurant.address}</span>
+                  <span className="text-gray-300">•</span>
+                  <span className="flex items-center">
+                    <span className="text-yellow-500 mr-0.5">★</span>
+                    {restaurant.rating}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {restaurant.tags.slice(0, 3).map((tag, idx) => (
+                    <span
+                      key={idx}
+                      className="text-xs text-gray-600 bg-gray-50 px-1.5 py-0.5 rounded"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const Recommendations = () => {
   const navigate = useNavigate();
   const { entries } = useEntries();
@@ -73,7 +182,12 @@ const Recommendations = () => {
     };
 
     const engine = new FoodRecommendationEngine();
-    return engine.generateRecommendations(userProfile);
+    const recommendations = engine.generateRecommendations(userProfile);
+    
+    return {
+      ...recommendations,
+      userProfile, // Include the userProfile for the restaurant widget
+    };
   }, [entries]);
 
   if (!entries || entries.length === 0) {
@@ -104,163 +218,75 @@ const Recommendations = () => {
   if (!discoveryData) return null;
 
   return (
-    <div className="space-y-6">
-      {/* Cuisine Recommendations */}
+    <div className="space-y-4">
+      {/* Cuisine Recommendations - TOP */}
       {discoveryData.cuisines && discoveryData.cuisines.length > 0 && (
-        <div className="bg-white rounded-2xl p-6 border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-lg font-light text-gray-900">
-              🌍 Explore New Cuisines
-            </h4>
-            <span className="text-xs text-gray-500">
-              Based on your preferences
-            </span>
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <div className="mb-3">
+            <h4 className="font-medium text-gray-900 text-sm">Explore New Cuisines</h4>
+            <p className="text-xs text-gray-500 mt-0.5">Based on your preferences</p>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {discoveryData.cuisines.slice(0, 3).map((cuisine, index) => (
               <div
                 key={cuisine.key || index}
-                className="p-4 border border-gray-100 rounded-xl hover:border-gray-200 transition-colors group"
+                className="p-3 border border-gray-100 rounded-lg hover:border-gray-300 transition-colors group cursor-pointer"
+                onClick={() => navigate("/add")}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <h5 className="font-medium text-gray-900">
-                    {cuisine.name} Cuisine
+                <div className="flex items-start justify-between mb-1">
+                  <h5 className="font-medium text-gray-900 text-sm">
+                    {cuisine.name}
                   </h5>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                      {cuisine.confidence}% match
-                    </span>
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        index === 0
-                          ? "bg-green-100 text-green-700"
-                          : index === 1
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-orange-100 text-orange-700"
-                      }`}
-                    >
-                      {index === 0 ? "Perfect" : index === 1 ? "Great" : "Good"}{" "}
-                      fit
-                    </span>
-                  </div>
+                  <span className="text-xs text-gray-500 bg-gray-50 px-2 py-0.5 rounded">
+                    {cuisine.confidence}% match
+                  </span>
                 </div>
                 {cuisine.reasons && cuisine.reasons.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    {cuisine.reasons.slice(0, 3).map((reason, idx) => (
-                      <span
-                        key={idx}
-                        className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-full"
-                      >
-                        {reason}
-                      </span>
-                    ))}
-                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    {cuisine.reasons.slice(0, 2).join(" • ")}
+                  </p>
                 )}
-                <button
-                  onClick={() => navigate("/add")}
-                  className="text-xs text-black hover:text-gray-700 font-medium group-hover:underline"
-                >
-                  Try this cuisine →
-                </button>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Specific Dish Recommendations */}
+      {/* Dish Recommendations */}
       {discoveryData.dishes && discoveryData.dishes.length > 0 && (
-        <div className="bg-white rounded-2xl p-6 border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-lg font-light text-gray-900">
-              🍽️ Perfect Dishes for You
-            </h4>
-            <span className="text-xs text-gray-500">Flavor matched</span>
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <div className="mb-3">
+            <h4 className="font-medium text-gray-900 text-sm">Perfect Dishes for You</h4>
+            <p className="text-xs text-gray-500 mt-0.5">Flavor matched</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {discoveryData.dishes.slice(0, 4).map((dish, index) => (
+          <div className="space-y-2">
+            {discoveryData.dishes.slice(0, 3).map((dish, index) => (
               <div
                 key={index}
-                className="p-4 border border-gray-100 rounded-xl hover:border-gray-200 transition-colors group"
+                className="p-3 border border-gray-100 rounded-lg hover:border-gray-300 transition-colors group cursor-pointer"
+                onClick={() => navigate("/add")}
               >
-                <div className="flex justify-between items-start mb-2">
+                <div className="flex justify-between items-start mb-1">
                   <h5 className="font-medium text-gray-900 text-sm">
                     {dish.name}
                   </h5>
-                  <span className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-full">
+                  <span className="text-xs text-gray-500">
                     {dish.cuisine}
                   </span>
                 </div>
-                <p className="text-xs text-gray-600 mb-2">
-                  {dish.reasons
-                    ? dish.reasons.join(" • ")
-                    : "Recommended for you"}
+                <p className="text-xs text-gray-600">
+                  {dish.reasons && dish.reasons.length > 0
+                    ? dish.reasons[0]
+                    : "Matches your taste profile"}
                 </p>
-                <button
-                  onClick={() => navigate("/add")}
-                  className="text-xs text-black hover:text-gray-700 font-medium group-hover:underline"
-                >
-                  Add to try list →
-                </button>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Personal Tips */}
-      {discoveryData.tips && discoveryData.tips.length > 0 && (
-        <div className="bg-white rounded-2xl p-6 border border-gray-100">
-          <h4 className="text-lg font-light text-gray-900 mb-4">
-            💡 Personal Culinary Tips
-          </h4>
-          <div className="space-y-3">
-            {discoveryData.tips.slice(0, 3).map((tip, index) => (
-              <div
-                key={index}
-                className="p-3 bg-blue-50 rounded-lg border border-blue-100"
-              >
-                <div className="flex items-start space-x-2">
-                  <div className="text-blue-600 text-sm font-medium flex-shrink-0">
-                    Tip:
-                  </div>
-                  <p className="text-blue-800 text-sm">{tip}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Action Section */}
-      <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-6 text-center border border-gray-200">
-        <div className="mb-4">
-          <span className="text-2xl mb-2 block">🎯</span>
-          <h4 className="text-lg font-light text-gray-900 mb-2">
-            Ready for Your Next Adventure?
-          </h4>
-          <p className="text-gray-600 text-sm max-w-md mx-auto">
-            These recommendations are tailored to expand your palate while
-            staying true to your taste preferences.
-          </p>
-        </div>
-        <button
-          onClick={() => navigate("/add")}
-          className="px-6 py-3 bg-black text-white rounded-full font-medium hover:bg-gray-800 transition-all shadow-lg hover:shadow-xl"
-        >
-          Start Exploring
-        </button>
-      </div>
-
-      {/* Algorithm Explanation */}
-      <div className="bg-gray-50 rounded-2xl p-4 text-center border border-gray-100">
-        <p className="text-xs text-gray-500 leading-relaxed">
-          🤖 Your recommendations are powered by intelligent analysis of your{" "}
-          {entries.length} food entries, including your flavor preferences,
-          cuisine exploration patterns, and rating history. The more you track,
-          the better your recommendations become.
-        </p>
-      </div>
+      {/* Sponsored Restaurants - BOTTOM */}
+      <SponsoredRestaurants userProfile={discoveryData.userProfile} />
     </div>
   );
 };

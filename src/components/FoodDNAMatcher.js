@@ -8,7 +8,6 @@ const FoodDNAMatcher = () => {
   const [allEntries, setAllEntries] = useState([]);
   const [compatibilityData, setCompatibilityData] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
-  const [animationStep, setAnimationStep] = useState(0);
 
   const loadAnalysisData = useCallback(async () => {
     try {
@@ -21,11 +20,6 @@ const FoodDNAMatcher = () => {
 
   useEffect(() => {
     loadAnalysisData();
-    // Animation sequence
-    const timer = setInterval(() => {
-      setAnimationStep((prev) => (prev + 1) % 4);
-    }, 2000);
-    return () => clearInterval(timer);
   }, [loadAnalysisData]);
 
   useEffect(() => {
@@ -200,77 +194,11 @@ const FoodDNAMatcher = () => {
     return "🤔";
   };
 
-  const DNAHelix = ({ compatibility, animate }) => (
-    <div className="relative w-16 h-20">
-      <svg viewBox="0 0 60 80" className="w-full h-full">
-        <defs>
-          <linearGradient id="dna-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#8B5CF6" />
-            <stop offset="50%" stopColor="#EC4899" />
-            <stop offset="100%" stopColor="#F59E0B" />
-          </linearGradient>
-        </defs>
-
-        {/* DNA strands */}
-        <path
-          d="M15 10 Q30 20 15 30 Q30 40 15 50 Q30 60 15 70"
-          stroke="url(#dna-gradient)"
-          strokeWidth="3"
-          fill="none"
-          className={animate ? "animate-pulse" : ""}
-        />
-        <path
-          d="M45 10 Q30 20 45 30 Q30 40 45 50 Q30 60 45 70"
-          stroke="url(#dna-gradient)"
-          strokeWidth="3"
-          fill="none"
-          className={animate ? "animate-pulse" : ""}
-        />
-
-        {/* Connection lines */}
-        {[20, 40, 60].map((y, i) => (
-          <line
-            key={i}
-            x1="15"
-            y1={y}
-            x2="45"
-            y2={y}
-            stroke="url(#dna-gradient)"
-            strokeWidth="2"
-            opacity={compatibility > (i + 1) * 25 ? 1 : 0.3}
-            className={animate ? "animate-pulse" : ""}
-          />
-        ))}
-      </svg>
-
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-xs font-bold text-white">{compatibility}%</span>
-      </div>
-    </div>
-  );
-
   return (
-    <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 rounded-2xl p-4 md:p-6 relative overflow-hidden">
-      {/* Animated DNA background */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-0 left-0 w-full h-full">
-          {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className={`absolute w-4 h-4 bg-purple-300 rounded-full animate-ping`}
-              style={{
-                left: `${20 + i * 15}%`,
-                top: `${10 + (i % 3) * 30}%`,
-                animationDelay: `${i * 0.5}s`,
-              }}
-            />
-          ))}
-        </div>
-      </div>
-
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
       <div className="relative z-10">
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-light mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+        <div className="text-center mb-6 px-4 pt-6">
+          <h2 className="text-xl font-light mb-2 text-gray-900">
             🧬 Food DNA Matcher
           </h2>
           <p className="text-gray-600 text-sm">
@@ -279,8 +207,8 @@ const FoodDNAMatcher = () => {
         </div>
 
         {friends.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-20 h-20 mx-auto mb-4 bg-white/70 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-purple-200">
+          <div className="text-center py-12 px-4">
+            <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
               <span className="text-3xl">👥</span>
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -291,22 +219,22 @@ const FoodDNAMatcher = () => {
             </p>
             <button
               onClick={() => (window.location.href = "/profile")}
-              className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-sm font-medium hover:from-purple-600 hover:to-pink-600 transition-all"
+              className="px-6 py-2 bg-black text-white rounded-full text-sm font-medium hover:bg-gray-800 transition-all"
             >
               Find Friends
             </button>
           </div>
         ) : compatibilityData.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="w-16 h-16 mx-auto mb-4 border-2 border-purple-200 border-t-purple-500 rounded-full animate-spin"></div>
+          <div className="text-center py-8 px-4">
+            <div className="w-16 h-16 mx-auto mb-4 border-2 border-gray-200 rounded-full animate-spin"></div>
             <p className="text-gray-500">Analyzing food DNA...</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 px-4 pb-6">
             {compatibilityData.slice(0, 5).map((friendData, index) => (
               <div
                 key={friendData.id}
-                className="bg-white/70 backdrop-blur-sm rounded-2xl p-4 border border-white/20 cursor-pointer transition-all duration-300 hover:bg-white/80 hover:scale-[1.02]"
+                className="bg-gray-50 rounded-xl p-4 cursor-pointer transition-all duration-300 hover:bg-gray-100"
                 onClick={() =>
                   setSelectedFriend(
                     selectedFriend?.id === friendData.id ? null : friendData,
@@ -330,12 +258,8 @@ const FoodDNAMatcher = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <DNAHelix
-                      compatibility={friendData.compatibility}
-                      animate={animationStep === index % 4}
-                    />
-                    <div className="text-center min-w-[80px]">
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="text-center">
                       <div className="text-2xl mb-0.5">
                         {getCompatibilityEmoji(friendData.compatibility)}
                       </div>
@@ -343,17 +267,17 @@ const FoodDNAMatcher = () => {
                         {friendData.compatibility >= 80
                           ? "Soul Food"
                           : friendData.compatibility >= 60
-                            ? "Great Match"
+                            ? "Great"
                             : friendData.compatibility >= 40
-                              ? "Good Vibes"
-                              : "Different Tastes"}
+                              ? "Good"
+                              : "Different"}
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {selectedFriend?.id === friendData.id && (
-                  <div className="mt-4 pt-4 border-t border-white/30 space-y-4">
+                  <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
                     {/* Shared Tastes */}
                     {friendData.sharedTastes.length > 0 && (
                       <div>
@@ -364,10 +288,9 @@ const FoodDNAMatcher = () => {
                           {friendData.sharedTastes.map((taste, i) => (
                             <span
                               key={i}
-                              className="px-3 py-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 text-xs rounded-full border border-purple-200"
+                              className="px-3 py-1 bg-white text-gray-700 text-xs rounded-full border border-gray-200"
                             >
-                              {taste.cuisine} (
-                              {taste.userCount + taste.friendCount})
+                              {taste.cuisine} ({taste.userCount + taste.friendCount})
                             </span>
                           ))}
                         </div>
@@ -391,7 +314,7 @@ const FoodDNAMatcher = () => {
                     )}
 
                     {/* Plan Together Button */}
-                    <button className="w-full py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-medium rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-300">
+                    <button className="w-full py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-all duration-300">
                       🍽️ Plan a Food Date
                     </button>
                   </div>
@@ -403,7 +326,7 @@ const FoodDNAMatcher = () => {
 
         {/* Fun Facts */}
         {friends.length > 0 && (
-          <div className="mt-6 bg-white/50 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+          <div className="mt-6 bg-gray-50 rounded-2xl p-4 mx-4 mb-4">
             <h3 className="text-sm font-medium text-gray-900 mb-2">
               🔬 Food Science Facts
             </h3>
