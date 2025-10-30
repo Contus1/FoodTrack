@@ -1,22 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useSocial } from '../context/SocialContext';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import SocialFeed from '../components/SocialFeed';
-import FriendsManager from '../components/FriendsManager';
-import BottomNavigation from '../components/BottomNavigation';
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { useSocial } from "../context/SocialContext";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import SocialFeed from "../components/SocialFeed";
+import FriendsManager from "../components/FriendsManager";
+import BottomNavigation from "../components/BottomNavigation";
 
 const Home = () => {
   const { user } = useAuth();
   const { userProfile, friendRequests } = useSocial();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState('feed');
+  const [activeTab, setActiveTab] = useState("feed");
   const [showNotificationBadge, setShowNotificationBadge] = useState(false);
 
   useEffect(() => {
     if (!user) {
-      navigate('/login');
+      navigate("/login");
     }
   }, [user, navigate]);
 
@@ -26,8 +26,8 @@ const Home = () => {
 
   // Handle URL tab parameter
   useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab && (tab === 'friends' || tab === 'feed')) {
+    const tab = searchParams.get("tab");
+    if (tab && (tab === "friends" || tab === "feed")) {
       setActiveTab(tab);
       // Clear the URL parameter after setting the tab
       setSearchParams({});
@@ -53,21 +53,31 @@ const Home = () => {
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-3 md:space-x-4">
               {/* Add Entry Button - iOS Control Center Style */}
               <button
-                onClick={() => navigate('/add')}
+                onClick={() => navigate("/add")}
                 className="w-11 h-11 md:w-12 md:h-12 glass-panel rounded-full flex items-center justify-center hover:bg-white/90 interaction-smooth shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:shadow-[0_12px_48px_rgba(0,0,0,0.18)] backdrop-blur-xl"
               >
-                <svg className="w-5 h-5 md:w-6 md:h-6 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                <svg
+                  className="w-5 h-5 md:w-6 md:h-6 text-gray-700"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 4.5v15m7.5-7.5h-15"
+                  />
                 </svg>
               </button>
-              
+
               {/* Profile Avatar with Glass Ring */}
               <button
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate("/profile")}
                 className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden bg-gray-100 ring-2 ring-white/50 shadow-sm hover:ring-white/80 interaction-smooth"
               >
                 {userProfile?.avatar_url ? (
@@ -78,31 +88,33 @@ const Home = () => {
                   />
                 ) : (
                   <div className="w-full h-full bg-black text-white flex items-center justify-center text-xs md:text-sm font-light">
-                    {userProfile?.display_name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'U'}
+                    {userProfile?.display_name?.charAt(0)?.toUpperCase() ||
+                      user.email?.charAt(0)?.toUpperCase() ||
+                      "U"}
                   </div>
                 )}
               </button>
             </div>
           </div>
-          
+
           {/* Tab Navigation */}
           <div className="flex mt-3 md:mt-4 space-x-6 md:space-x-8">
             <button
-              onClick={() => setActiveTab('feed')}
+              onClick={() => setActiveTab("feed")}
               className={`relative py-2 px-1 text-sm font-medium interaction-smooth ${
-                activeTab === 'feed'
-                  ? 'text-black border-b-2 border-black'
-                  : 'text-gray-500 hover:text-gray-700'
+                activeTab === "feed"
+                  ? "text-black border-b-2 border-black"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
               Feed
             </button>
             <button
-              onClick={() => setActiveTab('friends')}
+              onClick={() => setActiveTab("friends")}
               className={`relative py-2 px-1 text-sm font-medium interaction-smooth ${
-                activeTab === 'friends'
-                  ? 'text-black border-b-2 border-black'
-                  : 'text-gray-500 hover:text-gray-700'
+                activeTab === "friends"
+                  ? "text-black border-b-2 border-black"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
               Friends
@@ -115,10 +127,10 @@ const Home = () => {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 md:py-6">
-        {activeTab === 'feed' && <SocialFeed />}
-        {activeTab === 'friends' && <FriendsManager />}
+        {activeTab === "feed" && <SocialFeed />}
+        {activeTab === "friends" && <FriendsManager />}
       </div>
-      
+
       <BottomNavigation />
     </div>
   );

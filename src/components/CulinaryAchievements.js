@@ -8,21 +8,11 @@ const CulinaryAchievements = () => {
   const [achievements, setAchievements] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [celebrationAchievement, setCelebrationAchievement] = useState(null);
-  const [isLocked, setIsLocked] = useState(true); // Lock achievements by default
 
   useEffect(() => {
     calculateAchievements();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entries, friends]);
-
-  // Check if user has enough friends to unlock achievements
-  const canUnlockAchievements = friends.length >= 3; // Require 3 friends to unlock
-
-  const handleUnlockAttempt = () => {
-    if (canUnlockAchievements) {
-      setIsLocked(false);
-    }
-  };
 
   const achievementDefinitions = [
     // Explorer Achievements
@@ -345,199 +335,145 @@ const CulinaryAchievements = () => {
   const totalPoints = achievements.filter(a => a.earned).reduce((sum, a) => sum + a.points, 0);
 
   return (
-    <div className="bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 rounded-2xl p-4 md:p-6 relative overflow-hidden">
-      {/* Locked State */}
-      {isLocked && (
-        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-20 flex items-center justify-center rounded-2xl">
-          <div className="text-center max-w-xs px-4">
-            <div className="text-4xl md:text-5xl mb-3">🔒</div>
-            <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">Achievements Locked</h3>
-            <p className="text-gray-600 text-xs md:text-sm mb-4 leading-relaxed">
-              Add {3 - friends.length} more friend{3 - friends.length !== 1 ? 's' : ''} to unlock achievements!
-            </p>
-            <div className="flex items-center justify-center space-x-2 mb-4">
-              <div className="flex -space-x-1">
-                {[...Array(3)].map((_, i) => (
-                  <div
-                    key={i}
-                    className={`w-6 h-6 md:w-8 md:h-8 rounded-full border-2 border-white flex items-center justify-center text-xs ${
-                      i < friends.length 
-                        ? 'bg-green-500 text-white' 
-                        : 'bg-gray-300 text-gray-600'
-                    }`}
-                  >
-                    {i < friends.length ? '✓' : '👤'}
-                  </div>
-                ))}
-              </div>
-              <span className="text-xs md:text-sm text-gray-500">{friends.length}/3</span>
-            </div>
-            {canUnlockAchievements ? (
-              <button
-                onClick={handleUnlockAttempt}
-                className="px-4 py-2 md:px-6 md:py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full text-sm font-medium hover:from-amber-600 hover:to-orange-600 transition-all"
-              >
-                🎉 Unlock Now!
-              </button>
-            ) : (
-              <button
-                onClick={() => window.location.href = '#friends'}
-                className="px-4 py-2 md:px-6 md:py-3 bg-gray-100 text-gray-700 rounded-full text-sm font-medium hover:bg-gray-200 transition-all"
-              >
-                Find Friends
-              </button>
-            )}
+    <div className="space-y-6">
+      {/* Header Section */}
+      <div className="glass-card rounded-2xl p-6 text-center">
+        <h2 className="text-2xl font-light mb-3 flex items-center justify-center space-x-2">
+          <span>🏆</span>
+          <span>Culinary Achievements</span>
+        </h2>
+        <div className="flex justify-center items-center space-x-8 text-sm">
+          <div className="flex flex-col">
+            <span className="text-2xl font-light text-orange-600">{earnedCount}/{achievements.length}</span>
+            <span className="text-gray-600 text-xs">unlocked</span>
+          </div>
+          <div className="w-px h-12 bg-gray-200"></div>
+          <div className="flex flex-col">
+            <span className="text-2xl font-light text-amber-600">{totalPoints}</span>
+            <span className="text-gray-600 text-xs">points</span>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Celebration Animation */}
+      {/* Celebration Modal */}
       {celebrationAchievement && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-8 text-center max-w-sm mx-4 transform animate-bounce">
-            <div className="text-6xl mb-4">{celebrationAchievement.icon}</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Achievement Unlocked!</h3>
-            <h4 className="text-lg font-medium text-gray-800 mb-2">{celebrationAchievement.title}</h4>
-            <p className="text-gray-600 text-sm mb-4">{celebrationAchievement.description}</p>
-            <div className={`inline-block px-4 py-2 rounded-full text-white bg-gradient-to-r ${getRarityColor(celebrationAchievement.rarity)}`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md p-4">
+          <div className="glass-card rounded-3xl p-8 text-center max-w-sm transform animate-bounce shadow-2xl">
+            <div className="text-7xl mb-4">{celebrationAchievement.icon}</div>
+            <div className="text-sm font-medium text-orange-600 mb-2 uppercase tracking-wider">
+              Achievement Unlocked!
+            </div>
+            <h4 className="text-xl font-light text-gray-900 mb-2">{celebrationAchievement.title}</h4>
+            <p className="text-gray-600 text-sm mb-4 leading-relaxed">{celebrationAchievement.description}</p>
+            <div className={`inline-block px-6 py-2 rounded-full text-white text-sm font-medium bg-gradient-to-r ${getRarityColor(celebrationAchievement.rarity)} shadow-lg`}>
               +{celebrationAchievement.points} points
             </div>
           </div>
         </div>
       )}
 
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-0 left-0 w-full h-full">
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute text-4xl opacity-20"
-              style={{
-                left: `${10 + (i % 4) * 25}%`,
-                top: `${10 + Math.floor(i / 4) * 40}%`,
-                transform: `rotate(${i * 45}deg)`
-              }}
-            >
-              🏆
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="relative z-10">
-        <div className="text-center mb-4 md:mb-6">
-          <h2 className="text-xl md:text-2xl font-light mb-2 bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
-            🏆 Culinary Achievements
-          </h2>
-          <div className="flex justify-center space-x-4 md:space-x-6 text-sm">
-            <div>
-              <span className="font-bold text-orange-600">{earnedCount}</span>
-              <span className="text-gray-600">/{achievements.length} unlocked</span>
-            </div>
-            <div>
-              <span className="font-bold text-amber-600">{totalPoints}</span>
-              <span className="text-gray-600"> points</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Category Filter */}
-        <div className="flex flex-wrap justify-center gap-1 md:gap-2 mb-4 md:mb-6">
+      {/* Category Filter */}
+      <div className="glass-card rounded-xl p-3">
+        <div className="flex flex-wrap justify-center gap-2">
           {categories.map(category => (
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
-              className={`flex items-center space-x-1 md:space-x-2 px-2 md:px-4 py-1 md:py-2 rounded-full text-xs md:text-sm font-medium transition-all ${
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 selectedCategory === category.id
-                  ? 'bg-orange-500 text-white shadow-lg'
-                  : 'bg-white/70 text-gray-700 hover:bg-white/90'
+                  ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md'
+                  : 'glass-button hover:scale-105'
               }`}
             >
-              <span>{category.icon}</span>
-              <span className="hidden sm:inline">{category.label}</span>
+              <span className="text-base">{category.icon}</span>
+              <span>{category.label}</span>
             </button>
-          ))}
-        </div>
+              ))}
+            </div>
+          </div>
 
-        {/* Achievements Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-          {filteredAchievements.map(achievement => (
-            <div
-              key={achievement.id}
-              className={`relative bg-white/80 backdrop-blur-sm rounded-xl p-3 md:p-4 border transition-all duration-300 ${
-                achievement.earned 
-                  ? 'border-orange-200 shadow-lg' 
-                  : 'border-white/30 opacity-60 hover:opacity-80'
-              }`}
-            >
-              {/* Rarity Border */}
-              <div className={`absolute inset-0 rounded-xl bg-gradient-to-r ${getRarityColor(achievement.rarity)} p-0.5`}>
-                <div className="bg-white/95 rounded-xl h-full w-full p-3 md:p-4">
-                  <div className="flex items-start justify-between mb-2 md:mb-3">
-                    <div className="text-2xl md:text-3xl">{achievement.icon}</div>
-                    <div className={`px-1.5 py-0.5 md:px-2 md:py-1 rounded-full text-xs font-medium text-white bg-gradient-to-r ${getRarityColor(achievement.rarity)}`}>
-                      {achievement.rarity}
-                    </div>
+          {/* Achievements Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredAchievements.map(achievement => (
+              <div
+                key={achievement.id}
+                className={`glass-card rounded-xl p-5 border transition-all duration-300 ${
+                  achievement.earned 
+                    ? 'border-orange-200 shadow-lg glass-panel-hover' 
+                    : 'border-gray-100 opacity-70 hover:opacity-90'
+                }`}
+              >
+                {/* Rarity Badge & Icon */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`text-4xl ${achievement.earned ? 'scale-110' : 'grayscale'} transition-all`}>
+                    {achievement.icon}
                   </div>
-                  
-                  <h3 className="font-bold text-gray-900 mb-1 text-sm md:text-base leading-tight">{achievement.title}</h3>
-                  <p className="text-gray-600 text-xs md:text-sm mb-2 md:mb-3 leading-relaxed">{achievement.description}</p>
-                  
-                  {/* Progress Bar */}
-                  <div className="mb-2">
-                    <div className="flex justify-between text-xs text-gray-500 mb-1">
-                      <span>Progress</span>
-                      <span>{Math.round(achievement.progress)}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-1.5 md:h-2">
-                      <div
-                        className={`h-1.5 md:h-2 rounded-full bg-gradient-to-r ${getRarityColor(achievement.rarity)} transition-all duration-500`}
-                        style={{ width: `${achievement.progress}%` }}
-                      />
-                    </div>
+                  <div className={`px-3 py-1 rounded-full text-xs font-medium text-white bg-gradient-to-r ${getRarityColor(achievement.rarity)} shadow-sm`}>
+                    {achievement.rarity}
                   </div>
+                </div>
+                
+                {/* Content */}
+                <h3 className="font-medium text-gray-900 mb-2 text-base">{achievement.title}</h3>
+                <p className="text-gray-600 text-sm mb-4 leading-relaxed min-h-[40px]">{achievement.description}</p>
+                
+                {/* Progress Bar */}
+                <div className="mb-4">
+                  <div className="flex justify-between text-xs text-gray-500 mb-2">
+                    <span>Progress</span>
+                    <span className="font-medium">{Math.round(achievement.progress)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                    <div
+                      className={`h-2 rounded-full bg-gradient-to-r ${getRarityColor(achievement.rarity)} transition-all duration-500 ease-out`}
+                      style={{ width: `${achievement.progress}%` }}
+                    />
+                  </div>
+                </div>
 
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500 capitalize">{achievement.category}</span>
-                    <span className="text-xs md:text-sm font-bold text-orange-600">
-                      {achievement.earned ? '+' : ''}{achievement.points} pts
-                    </span>
-                  </div>
+                {/* Footer */}
+                <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+                  <span className="text-xs text-gray-500 capitalize font-medium">{achievement.category}</span>
+                  <span className={`text-sm font-semibold ${achievement.earned ? 'text-orange-600' : 'text-gray-400'}`}>
+                    {achievement.earned && '+'}{achievement.points} pts
+                  </span>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Next Achievement Hint */}
-        {filteredAchievements.length > 0 && (
-          <div className="mt-6 bg-white/50 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
-            <h3 className="text-sm font-medium text-gray-900 mb-2">🎯 Up Next</h3>
-            {(() => {
-              const nextAchievement = filteredAchievements
-                .filter(a => !a.earned)
-                .sort((a, b) => b.progress - a.progress)[0];
-              
-              return nextAchievement ? (
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl">{nextAchievement.icon}</span>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">{nextAchievement.title}</h4>
-                    <p className="text-sm text-gray-600">{nextAchievement.description}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-bold text-orange-600">{nextAchievement.points} pts</div>
-                    <div className="text-xs text-gray-500">{Math.round(nextAchievement.progress)}%</div>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-gray-600 text-sm">All achievements in this category completed! 🎉</p>
-              );
-            })()}
+            ))}
           </div>
-        )}
-      </div>
+
+          {/* Next Achievement Section */}
+          {filteredAchievements.length > 0 && (
+            <div className="glass-card rounded-xl p-6">
+              <h3 className="text-sm font-medium text-gray-900 mb-4 flex items-center space-x-2">
+                <span>🎯</span>
+                <span>Up Next</span>
+              </h3>
+              {(() => {
+                const nextAchievement = filteredAchievements
+                  .filter(a => !a.earned)
+                  .sort((a, b) => b.progress - a.progress)[0];
+                
+                return nextAchievement ? (
+                  <div className="flex items-center space-x-4 p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg">
+                    <span className="text-4xl">{nextAchievement.icon}</span>
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900 mb-1">{nextAchievement.title}</h4>
+                      <p className="text-sm text-gray-600 leading-relaxed">{nextAchievement.description}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-semibold text-orange-600">{nextAchievement.points} pts</div>
+                      <div className="text-xs text-gray-500 mt-1">{Math.round(nextAchievement.progress)}% complete</div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-600 text-sm text-center py-4">
+                    🎉 All achievements in this category completed!
+                  </p>
+                );
+              })()}
+            </div>
+          )}
     </div>
   );
 };

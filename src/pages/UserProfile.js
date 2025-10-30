@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useSocial } from '../context/SocialContext';
-import supabase from '../utils/supabaseClient';
-import EntryCard from '../components/EntryCard';
-import BottomNavigation from '../components/BottomNavigation';
+import React, { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useSocial } from "../context/SocialContext";
+import supabase from "../utils/supabaseClient";
+import EntryCard from "../components/EntryCard";
+import BottomNavigation from "../components/BottomNavigation";
 
 const UserProfile = () => {
   const { userId } = useParams();
   const { user } = useAuth();
   const { friends, sendFriendRequest } = useSocial();
   const navigate = useNavigate();
-  
+
   const [targetUser, setTargetUser] = useState(null);
   const [userEntries, setUserEntries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,44 +23,44 @@ const UserProfile = () => {
     try {
       // Load user profile
       const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', userId)
+        .from("user_profiles")
+        .select("*")
+        .eq("id", userId)
         .single();
 
       if (profileError) {
-        console.error('Error loading user profile:', profileError);
-        navigate('/');
+        console.error("Error loading user profile:", profileError);
+        navigate("/");
         return;
       }
 
       setTargetUser(profileData);
 
       // Load user's public entries (is_private = false OR NULL)
-      console.log('🔍 Fetching entries for user:', userId);
+      console.log("🔍 Fetching entries for user:", userId);
       const { data: entriesData, error: entriesError } = await supabase
-        .from('entries')
-        .select('*')
-        .eq('user_id', userId)
-        .or('is_private.eq.false,is_private.is.null')
-        .order('created_at', { ascending: false });
+        .from("entries")
+        .select("*")
+        .eq("user_id", userId)
+        .or("is_private.eq.false,is_private.is.null")
+        .order("created_at", { ascending: false });
 
-      console.log('📊 Query result:', { 
-        entriesCount: entriesData?.length || 0, 
+      console.log("📊 Query result:", {
+        entriesCount: entriesData?.length || 0,
         hasError: !!entriesError,
-        error: entriesError 
+        error: entriesError,
       });
 
       if (entriesError) {
-        console.error('❌ Error loading user entries:', entriesError);
-        console.error('Error details:', JSON.stringify(entriesError, null, 2));
+        console.error("❌ Error loading user entries:", entriesError);
+        console.error("Error details:", JSON.stringify(entriesError, null, 2));
       } else {
-        console.log('✅ Loaded entries:', entriesData);
+        console.log("✅ Loaded entries:", entriesData);
         // Just use the basic entry data - we don't need joins for the profile view
         setUserEntries(entriesData || []);
       }
     } catch (error) {
-      console.error('Error loading user data:', error);
+      console.error("Error loading user data:", error);
     } finally {
       setLoading(false);
     }
@@ -68,16 +68,16 @@ const UserProfile = () => {
 
   useEffect(() => {
     if (userId === user?.id) {
-      navigate('/profile');
+      navigate("/profile");
       return;
     }
-    
+
     loadUserData();
   }, [userId, user, navigate, loadUserData]);
 
   useEffect(() => {
     // Check friendship status
-    const friendship = friends.find(f => f.friend.id === userId);
+    const friendship = friends.find((f) => f.friend.id === userId);
     setIsFollowing(!!friendship);
     setFriendshipStatus(friendship?.status);
   }, [friends, userId]);
@@ -85,9 +85,9 @@ const UserProfile = () => {
   const handleSendFriendRequest = async () => {
     try {
       await sendFriendRequest(userId);
-      setFriendshipStatus('pending');
+      setFriendshipStatus("pending");
     } catch (error) {
-      console.error('Error sending friend request:', error);
+      console.error("Error sending friend request:", error);
     }
   };
 
@@ -105,7 +105,7 @@ const UserProfile = () => {
         <div className="text-center">
           <h2 className="text-xl font-light text-black mb-2">User not found</h2>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate("/")}
             className="text-blue-600 hover:text-blue-700"
           >
             Go back
@@ -116,15 +116,16 @@ const UserProfile = () => {
   }
 
   const getButtonText = () => {
-    if (friendshipStatus === 'pending') return 'Request Sent';
-    if (isFollowing) return 'Friends';
-    return 'Add Friend';
+    if (friendshipStatus === "pending") return "Request Sent";
+    if (isFollowing) return "Friends";
+    return "Add Friend";
   };
 
   const getButtonClass = () => {
-    if (friendshipStatus === 'pending') return 'bg-gray-100 text-gray-500 cursor-not-allowed';
-    if (isFollowing) return 'bg-green-100 text-green-700';
-    return 'bg-blue-600 text-white hover:bg-blue-700';
+    if (friendshipStatus === "pending")
+      return "bg-gray-100 text-gray-500 cursor-not-allowed";
+    if (isFollowing) return "bg-green-100 text-green-700";
+    return "bg-blue-600 text-white hover:bg-blue-700";
   };
 
   return (
@@ -135,24 +136,44 @@ const UserProfile = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate("/")}
                 className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-black rounded-full hover:bg-gray-50"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
                 </svg>
               </button>
               <h1 className="text-xl font-light tracking-wide text-black">
                 @{targetUser.username}
               </h1>
             </div>
-            
+
             <button
-              onClick={() => navigate('/friends')}
+              onClick={() => navigate("/friends")}
               className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-black rounded-full hover:bg-gray-50"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                />
               </svg>
             </button>
           </div>
@@ -165,9 +186,9 @@ const UserProfile = () => {
           <div className="flex items-center space-x-6">
             {/* Profile Avatar */}
             <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg">
-              {targetUser.display_name?.charAt(0)?.toUpperCase() || 'U'}
+              {targetUser.display_name?.charAt(0)?.toUpperCase() || "U"}
             </div>
-            
+
             {/* Profile Info */}
             <div className="flex-1">
               <div className="flex items-center space-x-4 mb-2">
@@ -176,15 +197,17 @@ const UserProfile = () => {
                 </h1>
                 <button
                   onClick={handleSendFriendRequest}
-                  disabled={friendshipStatus === 'pending' || isFollowing}
+                  disabled={friendshipStatus === "pending" || isFollowing}
                   className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${getButtonClass()}`}
                 >
                   {getButtonText()}
                 </button>
               </div>
-              
-              <p className="text-gray-500 text-sm mb-2">@{targetUser.username}</p>
-              
+
+              <p className="text-gray-500 text-sm mb-2">
+                @{targetUser.username}
+              </p>
+
               {targetUser.bio && (
                 <p className="text-gray-700 text-sm mb-4">{targetUser.bio}</p>
               )}
@@ -198,7 +221,9 @@ const UserProfile = () => {
         <div className="max-w-4xl mx-auto px-6 py-4">
           <div className="flex space-x-8 text-center">
             <div>
-              <div className="text-lg font-medium text-black">{userEntries.length}</div>
+              <div className="text-lg font-medium text-black">
+                {userEntries.length}
+              </div>
               <div className="text-sm text-gray-500">Dishes</div>
             </div>
           </div>
@@ -210,8 +235,18 @@ const UserProfile = () => {
         {userEntries.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-20 h-20 mx-auto mb-8 border border-gray-200 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={0.8} d="M12 4.5v15m7.5-7.5h-15" />
+              <svg
+                className="w-8 h-8 text-gray-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={0.8}
+                  d="M12 4.5v15m7.5-7.5h-15"
+                />
               </svg>
             </div>
             <h2 className="text-xl font-light text-black mb-4">
@@ -229,7 +264,7 @@ const UserProfile = () => {
           </div>
         )}
       </div>
-      
+
       <BottomNavigation />
     </div>
   );

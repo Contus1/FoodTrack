@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const AuthPage = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: '',
+    username: "",
+    email: "",
+    password: "",
   });
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
@@ -18,11 +18,11 @@ const AuthPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage('');
+    setMessage("");
     setSuccess(false);
 
     if (isSignUp && formData.password.length < 6) {
-      setMessage('Password must be at least 6 characters long');
+      setMessage("Password must be at least 6 characters long");
       setLoading(false);
       return;
     }
@@ -30,26 +30,32 @@ const AuthPage = () => {
     try {
       if (isSignUp) {
         const { error } = await signUp(formData.email, formData.password, {
-          username: formData.username
+          username: formData.username,
         });
-        
+
         if (error) {
           setMessage(error.message);
         } else {
           setSuccess(true);
-          setMessage(`Account created! Please check your email (${formData.email}) to confirm your account before signing in.`);
+          setMessage(
+            `Account created! Please check your email (${formData.email}) to confirm your account before signing in.`,
+          );
         }
       } else {
         const { error } = await signIn(formData.email, formData.password);
-        
+
         if (error) {
           setMessage(error.message);
         } else {
-          navigate('/');
+          navigate("/");
         }
       }
     } catch (err) {
-      setMessage(isSignUp ? 'Signup failed. Please try again.' : 'Login failed. Please try again.');
+      setMessage(
+        isSignUp
+          ? "Signup failed. Please try again."
+          : "Login failed. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -57,9 +63,9 @@ const AuthPage = () => {
 
   const switchMode = () => {
     setIsSignUp(!isSignUp);
-    setMessage('');
+    setMessage("");
     setSuccess(false);
-    setFormData({ username: '', email: '', password: '' });
+    setFormData({ username: "", email: "", password: "" });
   };
 
   return (
@@ -68,13 +74,12 @@ const AuthPage = () => {
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">🍽️</h1>
           <h2 className="text-3xl font-extrabold text-gray-900">
-            {isSignUp ? 'Create Account' : 'Welcome Back'}
+            {isSignUp ? "Create Account" : "Welcome Back"}
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            {isSignUp 
-              ? 'Start tracking your food journey today' 
-              : 'Sign in to your Food Diary account'
-            }
+            {isSignUp
+              ? "Start tracking your food journey today"
+              : "Sign in to your Food Diary account"}
           </p>
         </div>
       </div>
@@ -83,12 +88,16 @@ const AuthPage = () => {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           {success && isSignUp ? (
             <div className="text-center">
-              <div className="text-green-600 text-lg mb-4">✅ Account Created!</div>
+              <div className="text-green-600 text-lg mb-4">
+                ✅ Account Created!
+              </div>
               <div className="text-sm text-gray-600 mb-4 p-4 bg-blue-50 rounded-lg">
                 <p className="font-medium mb-2">📧 Check Your Email</p>
                 <p>We've sent a confirmation email to:</p>
                 <p className="font-medium text-blue-600">{formData.email}</p>
-                <p className="mt-2">Please click the confirmation link before signing in.</p>
+                <p className="mt-2">
+                  Please click the confirmation link before signing in.
+                </p>
               </div>
               <button
                 onClick={switchMode}
@@ -101,7 +110,10 @@ const AuthPage = () => {
             <form className="space-y-6" onSubmit={handleSubmit}>
               {isSignUp && (
                 <div>
-                  <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="username"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Username
                   </label>
                   <div className="mt-1">
@@ -111,7 +123,12 @@ const AuthPage = () => {
                       type="text"
                       required={isSignUp}
                       value={formData.username}
-                      onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          username: e.target.value,
+                        }))
+                      }
                       className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                       placeholder="Choose a username"
                     />
@@ -120,7 +137,10 @@ const AuthPage = () => {
               )}
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Email Address
                 </label>
                 <div className="mt-1">
@@ -131,7 +151,12 @@ const AuthPage = () => {
                     autoComplete="email"
                     required
                     value={formData.email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
                     className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                     placeholder="Enter your email"
                   />
@@ -144,7 +169,10 @@ const AuthPage = () => {
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   Password
                 </label>
                 <div className="mt-1">
@@ -152,12 +180,23 @@ const AuthPage = () => {
                     id="password"
                     name="password"
                     type="password"
-                    autoComplete={isSignUp ? "new-password" : "current-password"}
+                    autoComplete={
+                      isSignUp ? "new-password" : "current-password"
+                    }
                     required
                     value={formData.password}
-                    onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        password: e.target.value,
+                      }))
+                    }
                     className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                    placeholder={isSignUp ? "Create a password (min 6 characters)" : "Enter your password"}
+                    placeholder={
+                      isSignUp
+                        ? "Create a password (min 6 characters)"
+                        : "Enter your password"
+                    }
                   />
                 </div>
                 {isSignUp && (
@@ -168,9 +207,13 @@ const AuthPage = () => {
               </div>
 
               {message && (
-                <div className={`text-sm text-center p-3 rounded-md ${
-                  success ? 'text-green-700 bg-green-50 border border-green-200' : 'text-red-700 bg-red-50 border border-red-200'
-                }`}>
+                <div
+                  className={`text-sm text-center p-3 rounded-md ${
+                    success
+                      ? "text-green-700 bg-green-50 border border-green-200"
+                      : "text-red-700 bg-red-50 border border-red-200"
+                  }`}
+                >
                   {message}
                 </div>
               )}
@@ -181,10 +224,13 @@ const AuthPage = () => {
                   disabled={loading}
                   className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 transition-colors"
                 >
-                  {loading 
-                    ? (isSignUp ? 'Creating account...' : 'Signing in...') 
-                    : (isSignUp ? 'Create Account' : 'Sign In')
-                  }
+                  {loading
+                    ? isSignUp
+                      ? "Creating account..."
+                      : "Signing in..."
+                    : isSignUp
+                      ? "Create Account"
+                      : "Sign In"}
                 </button>
               </div>
             </form>
@@ -194,12 +240,14 @@ const AuthPage = () => {
             <div className="mt-6">
               <div className="text-center">
                 <span className="text-sm text-gray-600">
-                  {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+                  {isSignUp
+                    ? "Already have an account?"
+                    : "Don't have an account?"}{" "}
                   <button
                     onClick={switchMode}
                     className="font-medium text-primary-600 hover:text-primary-500 transition-colors"
                   >
-                    {isSignUp ? 'Sign in here' : 'Sign up here'}
+                    {isSignUp ? "Sign in here" : "Sign up here"}
                   </button>
                 </span>
               </div>
