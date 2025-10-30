@@ -1,11 +1,19 @@
-import React, { useCallback } from 'react';
+import React, { useCallback } from "react";
 
-const StarRating = ({ value = 0, onRatingChange, readonly = false, size = 'md' }) => {
-  const handleStarClick = useCallback((rating) => {
-    if (!readonly && onRatingChange) {
-      onRatingChange(rating);
-    }
-  }, [readonly, onRatingChange]);
+const StarRating = ({
+  value = 0,
+  onRatingChange,
+  readonly = false,
+  size = "md",
+}) => {
+  const handleStarClick = useCallback(
+    (rating) => {
+      if (!readonly && onRatingChange) {
+        onRatingChange(rating);
+      }
+    },
+    [readonly, onRatingChange],
+  );
 
   // Rating scale from 1-10
   const ratings = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -32,9 +40,9 @@ const StarRating = ({ value = 0, onRatingChange, readonly = false, size = 'md' }
         <div className="relative h-14 bg-white rounded-full border border-gray-200 overflow-hidden">
           {/* Background gradient */}
           <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-yellow-50 via-amber-50 to-emerald-50" />
-          
+
           {/* Selected fill */}
-          <div 
+          <div
             className="absolute inset-y-0 left-0 bg-gradient-to-r from-amber-200 to-amber-400 transition-all duration-300 ease-out"
             style={{ width: `${(value / 10) * 100}%` }}
           />
@@ -50,12 +58,13 @@ const StarRating = ({ value = 0, onRatingChange, readonly = false, size = 'md' }
                 className={`
                   relative z-10 w-9 h-9 rounded-full transition-all duration-200
                   flex items-center justify-center font-medium text-sm
-                  ${readonly ? 'cursor-default' : 'cursor-pointer touch-manipulation active:scale-90'}
-                  ${rating === value 
-                    ? 'bg-black text-white scale-110 shadow-lg' 
-                    : rating < value 
-                      ? 'bg-white/80 text-gray-700 hover:bg-white hover:scale-105' 
-                      : 'bg-white/50 text-gray-400 hover:bg-white/80 hover:text-gray-600 hover:scale-105'
+                  ${readonly ? "cursor-default" : "cursor-pointer touch-manipulation active:scale-90"}
+                  ${
+                    rating === value
+                      ? "bg-black text-white scale-110 shadow-lg"
+                      : rating < value
+                        ? "bg-white/80 text-gray-700 hover:bg-white hover:scale-105"
+                        : "bg-white/50 text-gray-400 hover:bg-white/80 hover:text-gray-600 hover:scale-105"
                   }
                 `}
                 aria-label={`Rate ${rating} out of 10`}
@@ -70,11 +79,11 @@ const StarRating = ({ value = 0, onRatingChange, readonly = false, size = 'md' }
         {/* Quick description */}
         <div className="text-center mt-3">
           <p className="text-sm font-light text-gray-500">
-            {value <= 3 && 'Not great'}
-            {value > 3 && value <= 5 && 'Could be better'}
-            {value > 5 && value <= 7 && 'Pretty good'}
-            {value > 7 && value < 10 && 'Really great!'}
-            {value === 10 && 'Absolutely perfect! ✨'}
+            {value <= 3 && "Not great"}
+            {value > 3 && value <= 5 && "Could be better"}
+            {value > 5 && value <= 7 && "Pretty good"}
+            {value > 7 && value < 10 && "Really great!"}
+            {value === 10 && "Absolutely perfect! ✨"}
           </p>
         </div>
       </div>

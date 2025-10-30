@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { createPlaceholder } from '../utils/imageOptimization';
+import React, { useState, useEffect, useRef } from "react";
+import { createPlaceholder } from "../utils/imageOptimization";
 
 /**
  * Optimized Image component with lazy loading and blur-up effect
  */
-const OptimizedImage = ({ 
-  src, 
-  alt = '', 
-  className = '', 
+const OptimizedImage = ({
+  src,
+  alt = "",
+  className = "",
   thumbnailSrc = null,
   onLoad = null,
   priority = false,
-  ...props 
+  ...props
 }) => {
   const [imageSrc, setImageSrc] = useState(createPlaceholder());
   const [imageLoading, setImageLoading] = useState(true);
@@ -33,9 +33,9 @@ const OptimizedImage = ({
         });
       },
       {
-        rootMargin: '50px', // Start loading 50px before image enters viewport
-        threshold: 0.01
-      }
+        rootMargin: "50px", // Start loading 50px before image enters viewport
+        threshold: 0.01,
+      },
     );
 
     observer.observe(currentImg);
@@ -50,7 +50,7 @@ const OptimizedImage = ({
     if (!isInView || !src) return;
 
     const img = new Image();
-    
+
     // Load thumbnail first if available
     if (thumbnailSrc) {
       const thumb = new Image();
@@ -69,7 +69,7 @@ const OptimizedImage = ({
 
     img.onerror = () => {
       setImageLoading(false);
-      console.error('Failed to load image:', src);
+      console.error("Failed to load image:", src);
     };
 
     img.src = src;
@@ -81,9 +81,9 @@ const OptimizedImage = ({
         src={imageSrc}
         alt={alt}
         className={`w-full h-full object-cover transition-all duration-300 ${
-          imageLoading ? 'blur-sm scale-105' : 'blur-0 scale-100'
+          imageLoading ? "blur-sm scale-105" : "blur-0 scale-100"
         }`}
-        loading={priority ? 'eager' : 'lazy'}
+        loading={priority ? "eager" : "lazy"}
         {...props}
       />
       {imageLoading && (

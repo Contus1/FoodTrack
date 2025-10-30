@@ -27,9 +27,10 @@ const ProfileHeader = ({
             >
               {profile?.avatar_url ? (
                 <img
-                  src={profile.avatar_url}
+                  src={`${profile.avatar_url}?t=${Date.now()}`}
                   alt={profile.display_name}
                   className="w-full h-full object-cover"
+                  key={profile.avatar_url}
                 />
               ) : (
                 <div className="w-full h-full bg-black text-white flex items-center justify-center text-2xl font-light">
@@ -406,6 +407,9 @@ const Profile = () => {
     const file = event.target.files[0];
     if (!file) return;
 
+    console.log("=== Avatar Upload Started ===");
+    console.log("File selected:", file.name);
+
     // Validate file type
     if (!file.type.startsWith("image/")) {
       alert("Please select an image file");
@@ -421,58 +425,80 @@ const Profile = () => {
     setIsUploadingAvatar(true);
 
     try {
-      console.log("Starting avatar upload...", {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        userId: user.id,
-      });
-
       // Create unique filename
       const fileExt = file.name.split(".").pop();
       const fileName = `${user.id}/avatar-${Date.now()}.${fileExt}`;
 
-      console.log("Uploading to path:", fileName);
+      console.log("Step 1: Uploading file...");
+      console.log("  Bucket: avatars");
+      console.log("  Path:", fileName);
+      console.log("  User ID:", user.id);
 
-      // Upload to Supabase storage
-      const { data, error } = await supabase.storage
+      // Upload to Supabase storage in avatars bucket
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(fileName, file, {
           cacheControl: "3600",
           upsert: true,
         });
 
-      if (error) {
-        console.error("Upload error:", error);
-        throw error;
+      if (uploadError) {
+        console.error("❌ Upload failed:", uploadError);
+        throw uploadError;
       }
 
-      console.log("Upload successful:", data);
+      console.log("✅ Upload successful:", uploadData);
 
       // Get public URL
+      console.log("Step 2: Getting public URL...");
       const {
         data: { publicUrl },
       } = supabase.storage.from("avatars").getPublicUrl(fileName);
 
-      console.log("Public URL:", publicUrl);
+      console.log("✅ Public URL:", publicUrl);
 
       // Update user profile with new avatar URL
-      await updateUserProfile({ avatar_url: publicUrl });
+      console.log("Step 3: Updating profile in database...");
+      console.log("  Updating user_profiles where id =", user.id);
+      console.log("  Setting avatar_url to:", publicUrl);
+      
+      const updatedProfile = await updateUserProfile({ avatar_url: publicUrl });
+      
+      console.log("✅ Profile updated successfully:", updatedProfile);
+      console.log("✅ Updated avatar_url in profile:", updatedProfile?.avatar_url);
+      console.log("=== Avatar Upload Complete ===");
 
-      console.log("Avatar uploaded successfully");
-      alert("Avatar updated successfully!");
+      // Force a page reload to show the new avatar
+      window.location.reload();
     } catch (error) {
-      console.error("Error uploading avatar:", error);
+      console.error("❌ Error during avatar upload:", error);
+      console.error("Error details:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+      });
 
       // More detailed error message
-      let errorMessage = "Failed to upload avatar. ";
-      if (error.message?.includes("not found")) {
+      let errorMessage = "Failed to upload avatar.\n\n";
+      
+      if (error.message?.includes("not found") || error.message?.includes("bucket")) {
         errorMessage +=
-          "Storage bucket not found. Please check Supabase setup.";
-      } else if (error.message?.includes("policy")) {
-        errorMessage += "Permission denied. Please check storage policies.";
-      } else if (error.message?.includes("size")) {
-        errorMessage += "File size too large.";
+          "❌ Storage bucket 'avatars' not found.\n\n" +
+          "Please create it in Supabase Dashboard:\n" +
+          "1. Go to Storage\n" +
+          "2. Click 'New bucket'\n" +
+          "3. Name it 'avatars'\n" +
+          "4. Make it public\n" +
+          "5. Add policies for authenticated users";
+      } else if (error.message?.includes("policy") || error.message?.includes("permission") || error.message?.includes("denied")) {
+        errorMessage += 
+          "❌ Permission denied.\n\n" +
+          "Storage policies may be missing. Run this SQL:\n\n" +
+          "CREATE POLICY 'Users can upload avatars' ON storage.objects\n" +
+          "FOR INSERT TO authenticated WITH CHECK (bucket_id = 'avatars');\n\n" +
+          "CREATE POLICY 'Public can view avatars' ON storage.objects\n" +
+          "FOR SELECT TO public USING (bucket_id = 'avatars');";
       } else {
         errorMessage += `Error: ${error.message}`;
       }

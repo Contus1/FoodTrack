@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNotifications } from '../context/NotificationContext';
+import React from "react";
+import { useNotifications } from "../context/NotificationContext";
 
 const NotificationPrompt = () => {
   const { showPrompt, requestPermission, dismissPrompt } = useNotifications();
@@ -13,9 +13,7 @@ const NotificationPrompt = () => {
           <span className="text-3xl">🔔</span>
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-gray-900 mb-1">
-            Stay Connected!
-          </h3>
+          <h3 className="font-semibold text-gray-900 mb-1">Stay Connected!</h3>
           <p className="text-sm text-gray-600 mb-3">
             Get notified when friends post new meals or share updates
           </p>

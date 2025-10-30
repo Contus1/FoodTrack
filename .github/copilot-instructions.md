@@ -1,43 +1,44 @@
 <!-- Use this file to provide workspace-specific custom instructions to Copilot. For more details, visit https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
+
 - [x] Verify that the copilot-instructions.md file in the .github directory is created.
 
 - [x] Clarify Project Requirements
-	<!-- Food Diary MVP with React + Tailwind CSS (Mobile-First), Supabase backend, PWA capabilities -->
+<!-- Food Diary MVP with React + Tailwind CSS (Mobile-First), Supabase backend, PWA capabilities -->
 
 - [x] Scaffold the Project
-	<!-- Created React project structure with pages, components, context, and utilities -->
-	<!--
-	Ensure that the previous step has been marked as completed.
-	Call project setup tool with projectType parameter.
-	Run scaffolding command to create project files and folders.
-	Use '.' as the working directory.
-	If no appropriate projectType is available, search documentation using available tools.
-	Otherwise, create the project structure manually using available file creation tools.
-	-->
+  <!-- Created React project structure with pages, components, context, and utilities -->
+  <!--
+  Ensure that the previous step has been marked as completed.
+  Call project setup tool with projectType parameter.
+  Run scaffolding command to create project files and folders.
+  Use '.' as the working directory.
+  If no appropriate projectType is available, search documentation using available tools.
+  Otherwise, create the project structure manually using available file creation tools.
+  -->
 
 - [x] Customize the Project
-	<!-- Created Food Diary app with authentication, image upload, ratings, and mobile-first design -->
+<!-- Created Food Diary app with authentication, image upload, ratings, and mobile-first design -->
 
 - [x] Install Required Extensions
-	<!-- No additional extensions required -->
-	<!-- ONLY install extensions provided mentioned in the get_project_setup_info. Skip this step otherwise and mark as completed. -->
+  <!-- No additional extensions required -->
+  <!-- ONLY install extensions provided mentioned in the get_project_setup_info. Skip this step otherwise and mark as completed. -->
 
 - [x] Compile the Project
-	<!-- Project compiled successfully with React development server running on port 3000 -->
+<!-- Project compiled successfully with React development server running on port 3000 -->
 
 - [x] Create and Run Task
-	<!-- Development server is already running via npm start -->
-	<!--
-	Verify that all previous steps have been completed.
-	Check https://code.visualstudio.com/docs/debugtest/tasks to determine if the project needs a task. If so, use the create_and_run_task to create and launch a task based on package.json, README.md, and project structure.
-	Skip this step otherwise.
-	 -->
+  <!-- Development server is already running via npm start -->
+  <!--
+  Verify that all previous steps have been completed.
+  Check https://code.visualstudio.com/docs/debugtest/tasks to determine if the project needs a task. If so, use the create_and_run_task to create and launch a task based on package.json, README.md, and project structure.
+  Skip this step otherwise.
+   -->
 
 - [x] Launch the Project
-	<!-- Project is running at http://localhost:3000 -->
+<!-- Project is running at http://localhost:3000 -->
 
 - [x] Ensure Documentation is Complete
-	<!-- README.md created with setup instructions and project overview -->
+<!-- README.md created with setup instructions and project overview -->
 
 <!--
 ## Execution Guidelines
@@ -87,6 +88,7 @@ TASK COMPLETION RULES:
 
 Before starting a new task in the above plan, update progress in the plan.
 -->
+
 - Work through each checklist item systematically.
 - Keep communication concise and focused.
 - Follow development best practices.

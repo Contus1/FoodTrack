@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 const SpiderChart = ({ data, size = 200, maxValue = null }) => {
   const center = size / 2;
@@ -18,7 +18,7 @@ const SpiderChart = ({ data, size = 200, maxValue = null }) => {
       angle,
       x: center + radius * Math.cos(angle),
       y: center + radius * Math.sin(angle),
-      value: data[label] || 0
+      value: data[label] || 0,
     };
   });
 
@@ -30,7 +30,7 @@ const SpiderChart = ({ data, size = 200, maxValue = null }) => {
   });
 
   // Generate data polygon points
-  const dataPoints = axes.map(axis => {
+  const dataPoints = axes.map((axis) => {
     const valueRatio = axis.value / calculatedMaxValue;
     const dataRadius = radius * valueRatio;
     const x = center + dataRadius * Math.cos(axis.angle);
@@ -38,7 +38,7 @@ const SpiderChart = ({ data, size = 200, maxValue = null }) => {
     return `${x},${y}`;
   });
 
-  const dataPolygon = dataPoints.join(' ');
+  const dataPolygon = dataPoints.join(" ");
 
   return (
     <div className="flex justify-center">
@@ -87,7 +87,7 @@ const SpiderChart = ({ data, size = 200, maxValue = null }) => {
           const dataRadius = radius * valueRatio;
           const x = center + dataRadius * Math.cos(axis.angle);
           const y = center + dataRadius * Math.sin(axis.angle);
-          
+
           return (
             <circle
               key={index}
@@ -106,11 +106,11 @@ const SpiderChart = ({ data, size = 200, maxValue = null }) => {
           const labelDistance = radius + 20;
           const labelX = center + labelDistance * Math.cos(axis.angle);
           const labelY = center + labelDistance * Math.sin(axis.angle);
-          
+
           // Calculate text anchor based on position
-          let textAnchor = 'middle';
-          if (labelX > center + 5) textAnchor = 'start';
-          else if (labelX < center - 5) textAnchor = 'end';
+          let textAnchor = "middle";
+          if (labelX > center + 5) textAnchor = "start";
+          else if (labelX < center - 5) textAnchor = "end";
 
           return (
             <text
@@ -130,12 +130,12 @@ const SpiderChart = ({ data, size = 200, maxValue = null }) => {
         {/* Value labels on points */}
         {axes.map((axis, index) => {
           if (axis.value === 0) return null;
-          
+
           const valueRatio = axis.value / calculatedMaxValue;
           const dataRadius = radius * valueRatio;
           const x = center + dataRadius * Math.cos(axis.angle);
           const y = center + dataRadius * Math.sin(axis.angle);
-          
+
           return (
             <text
               key={`value-${index}`}

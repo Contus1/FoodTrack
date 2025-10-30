@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useSocial } from '../context/SocialContext';
-import { useEntries } from '../context/EntriesContext';
+import React, { useState, useEffect, useCallback } from "react";
+import { useSocial } from "../context/SocialContext";
+import { useEntries } from "../context/EntriesContext";
 
 const FlavorJourneyMap = () => {
   const { getSocialFeed } = useSocial();
@@ -15,7 +15,7 @@ const FlavorJourneyMap = () => {
       const combinedEntries = [...entries, ...socialEntries];
       setAllEntries(combinedEntries);
     } catch (error) {
-      console.error('Error loading entries:', error);
+      console.error("Error loading entries:", error);
     }
   }, [entries, getSocialFeed]);
 
@@ -26,17 +26,39 @@ const FlavorJourneyMap = () => {
   // Extract cuisine types from tags and locations
   const getCuisineTypes = () => {
     const cuisines = new Set();
-    allEntries.forEach(entry => {
-      entry.tags?.forEach(tag => {
-        if (tag.toLowerCase().includes('cuisine') || 
-            ['italian', 'chinese', 'mexican', 'indian', 'japanese', 'french', 'thai', 'korean', 'mediterranean', 'american'].includes(tag.toLowerCase())) {
+    allEntries.forEach((entry) => {
+      entry.tags?.forEach((tag) => {
+        if (
+          tag.toLowerCase().includes("cuisine") ||
+          [
+            "italian",
+            "chinese",
+            "mexican",
+            "indian",
+            "japanese",
+            "french",
+            "thai",
+            "korean",
+            "mediterranean",
+            "american",
+          ].includes(tag.toLowerCase())
+        ) {
           cuisines.add(tag);
         }
       });
-      
+
       // Also extract from location if it contains cuisine hints
       if (entry.location) {
-        ['pizza', 'sushi', 'taco', 'burger', 'pasta', 'curry', 'ramen', 'bbq'].forEach(keyword => {
+        [
+          "pizza",
+          "sushi",
+          "taco",
+          "burger",
+          "pasta",
+          "curry",
+          "ramen",
+          "bbq",
+        ].forEach((keyword) => {
           if (entry.location.toLowerCase().includes(keyword)) {
             cuisines.add(keyword.charAt(0).toUpperCase() + keyword.slice(1));
           }
@@ -50,26 +72,32 @@ const FlavorJourneyMap = () => {
   const getFlavorConnections = () => {
     const cuisines = getCuisineTypes().slice(0, 8); // Limit to 8 cuisines for performance
     const connections = [];
-    
+
     cuisines.forEach((cuisine, i) => {
-      const entriesForCuisine = allEntries.filter(entry => 
-        entry.tags?.some(tag => tag.toLowerCase().includes(cuisine.toLowerCase())) ||
-        entry.location?.toLowerCase().includes(cuisine.toLowerCase())
+      const entriesForCuisine = allEntries.filter(
+        (entry) =>
+          entry.tags?.some((tag) =>
+            tag.toLowerCase().includes(cuisine.toLowerCase()),
+          ) || entry.location?.toLowerCase().includes(cuisine.toLowerCase()),
       );
-      
-      const avgRating = entriesForCuisine.length > 0 
-        ? entriesForCuisine.reduce((sum, entry) => sum + (entry.rating || 0), 0) / entriesForCuisine.length 
-        : 0;
-      
+
+      const avgRating =
+        entriesForCuisine.length > 0
+          ? entriesForCuisine.reduce(
+              (sum, entry) => sum + (entry.rating || 0),
+              0,
+            ) / entriesForCuisine.length
+          : 0;
+
       connections.push({
         cuisine,
         entries: entriesForCuisine,
         avgRating,
         angle: (i / cuisines.length) * 2 * Math.PI,
-        radius: 80 + (avgRating * 15) // Reduced radius for better performance
+        radius: 80 + avgRating * 15, // Reduced radius for better performance
       });
     });
-    
+
     return connections;
   };
 
@@ -79,19 +107,19 @@ const FlavorJourneyMap = () => {
   // eslint-disable-next-line no-unused-vars
   const getCuisineColor = (cuisine) => {
     const colors = {
-      'italian': 'from-red-400 to-green-400',
-      'chinese': 'from-red-500 to-yellow-400',
-      'mexican': 'from-green-400 to-red-500',
-      'indian': 'from-orange-400 to-red-500',
-      'japanese': 'from-pink-400 to-indigo-400',
-      'french': 'from-purple-400 to-blue-400',
-      'thai': 'from-green-400 to-orange-400',
-      'korean': 'from-red-400 to-purple-400',
-      'mediterranean': 'from-blue-400 to-green-400',
-      'american': 'from-blue-500 to-red-500'
+      italian: "from-red-400 to-green-400",
+      chinese: "from-red-500 to-yellow-400",
+      mexican: "from-green-400 to-red-500",
+      indian: "from-orange-400 to-red-500",
+      japanese: "from-pink-400 to-indigo-400",
+      french: "from-purple-400 to-blue-400",
+      thai: "from-green-400 to-orange-400",
+      korean: "from-red-400 to-purple-400",
+      mediterranean: "from-blue-400 to-green-400",
+      american: "from-blue-500 to-red-500",
     };
-    
-    return colors[cuisine.toLowerCase()] || 'from-gray-400 to-gray-600';
+
+    return colors[cuisine.toLowerCase()] || "from-gray-400 to-gray-600";
   };
 
   return (
@@ -100,7 +128,14 @@ const FlavorJourneyMap = () => {
       <div className="absolute inset-0 opacity-5">
         <svg className="w-full h-full" viewBox="0 0 100 100">
           <defs>
-            <pattern id="flavor-pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+            <pattern
+              id="flavor-pattern"
+              x="0"
+              y="0"
+              width="20"
+              height="20"
+              patternUnits="userSpaceOnUse"
+            >
               <circle cx="10" cy="10" r="1" fill="currentColor" />
             </pattern>
           </defs>
@@ -119,10 +154,10 @@ const FlavorJourneyMap = () => {
         {/* Interactive Flavor Map - Optimized for performance */}
         <div className="flex justify-center mb-6 sm:mb-8">
           <div className="relative">
-            <svg 
-              width="100%" 
-              height="100%" 
-              viewBox="0 0 300 300" 
+            <svg
+              width="100%"
+              height="100%"
+              viewBox="0 0 300 300"
               className="w-64 h-64 sm:w-80 sm:h-80 drop-shadow-lg"
             >
               {/* Central hub */}
@@ -133,7 +168,7 @@ const FlavorJourneyMap = () => {
                 fill="url(#centralGradient)"
                 className="animate-pulse"
               />
-              
+
               {/* Gradient definitions */}
               <defs>
                 <radialGradient id="centralGradient" cx="0.5" cy="0.5" r="0.5">
@@ -141,7 +176,14 @@ const FlavorJourneyMap = () => {
                   <stop offset="100%" stopColor="#EC4899" />
                 </radialGradient>
                 {flavorConnections.slice(0, 6).map((connection, i) => (
-                  <linearGradient key={i} id={`gradient-${i}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                  <linearGradient
+                    key={i}
+                    id={`gradient-${i}`}
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
                     <stop offset="0%" stopColor="#8B5CF6" />
                     <stop offset="100%" stopColor="#EC4899" />
                   </linearGradient>
@@ -150,9 +192,11 @@ const FlavorJourneyMap = () => {
 
               {/* Connection lines - Reduced for performance */}
               {flavorConnections.slice(0, 6).map((connection, i) => {
-                const x = 150 + Math.cos(connection.angle) * (connection.radius * 0.7);
-                const y = 150 + Math.sin(connection.angle) * (connection.radius * 0.7);
-                
+                const x =
+                  150 + Math.cos(connection.angle) * (connection.radius * 0.7);
+                const y =
+                  150 + Math.sin(connection.angle) * (connection.radius * 0.7);
+
                 return (
                   <g key={i}>
                     <line
@@ -164,7 +208,7 @@ const FlavorJourneyMap = () => {
                       strokeWidth={Math.max(1, connection.avgRating)}
                       opacity="0.4"
                     />
-                    
+
                     {/* Cuisine nodes */}
                     <circle
                       cx={x}
@@ -176,15 +220,17 @@ const FlavorJourneyMap = () => {
                       onMouseLeave={() => setHoveredEntry(null)}
                       onClick={() => setSelectedCuisine(connection)}
                     />
-                    
+
                     {/* Cuisine labels */}
                     <text
-                      x={x + (Math.cos(connection.angle) * 20)}
-                      y={y + (Math.sin(connection.angle) * 20)}
+                      x={x + Math.cos(connection.angle) * 20}
+                      y={y + Math.sin(connection.angle) * 20}
                       textAnchor="middle"
                       className="text-xs font-medium fill-gray-700"
                     >
-                      {connection.cuisine.length > 8 ? connection.cuisine.slice(0, 8) + '...' : connection.cuisine}
+                      {connection.cuisine.length > 8
+                        ? connection.cuisine.slice(0, 8) + "..."
+                        : connection.cuisine}
                     </text>
                   </g>
                 );
@@ -204,13 +250,20 @@ const FlavorJourneyMap = () => {
             {/* Hover tooltip */}
             {hoveredEntry && (
               <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-xl p-4 shadow-xl border border-white/20 min-w-[200px]">
-                <h3 className="font-medium text-gray-900 mb-2">{hoveredEntry.cuisine}</h3>
+                <h3 className="font-medium text-gray-900 mb-2">
+                  {hoveredEntry.cuisine}
+                </h3>
                 <div className="space-y-1 text-sm text-gray-600">
                   <div>Dishes: {hoveredEntry.entries.length}</div>
-                  <div>Avg Rating: ⭐ {hoveredEntry.avgRating.toFixed(1)}/10</div>
+                  <div>
+                    Avg Rating: ⭐ {hoveredEntry.avgRating.toFixed(1)}/10
+                  </div>
                   <div className="text-xs mt-2">
-                    {hoveredEntry.entries.slice(0, 3).map(entry => entry.title).join(', ')}
-                    {hoveredEntry.entries.length > 3 && '...'}
+                    {hoveredEntry.entries
+                      .slice(0, 3)
+                      .map((entry) => entry.title)
+                      .join(", ")}
+                    {hoveredEntry.entries.length > 3 && "..."}
                   </div>
                 </div>
               </div>
@@ -232,10 +285,13 @@ const FlavorJourneyMap = () => {
                 ✕
               </button>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {selectedCuisine.entries.slice(0, 6).map((entry, i) => (
-                <div key={i} className="bg-white/50 rounded-xl p-3 border border-white/30">
+                <div
+                  key={i}
+                  className="bg-white/50 rounded-xl p-3 border border-white/30"
+                >
                   <div className="flex items-center space-x-3">
                     {entry.photo_url ? (
                       <img
@@ -254,7 +310,7 @@ const FlavorJourneyMap = () => {
                       </h4>
                       <div className="flex items-center space-x-1">
                         <span className="text-xs text-yellow-500">
-                          {'⭐'.repeat(Math.min(entry.rating || 0, 10))}
+                          {"⭐".repeat(Math.min(entry.rating || 0, 10))}
                         </span>
                         <span className="text-xs text-gray-500">
                           {entry.rating}/10
@@ -265,7 +321,7 @@ const FlavorJourneyMap = () => {
                 </div>
               ))}
             </div>
-            
+
             {selectedCuisine.entries.length > 6 && (
               <div className="text-center mt-4">
                 <span className="text-sm text-gray-500">

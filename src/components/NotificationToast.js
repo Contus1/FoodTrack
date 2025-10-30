@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNotifications } from '../context/NotificationContext';
+import React from "react";
+import { useNotifications } from "../context/NotificationContext";
 
 const NotificationToast = () => {
   const { notifications, markAsRead } = useNotifications();
@@ -15,16 +15,16 @@ const NotificationToast = () => {
 
   const getIcon = (type) => {
     switch (type) {
-      case 'new_post':
-        return '🍽️';
-      case 'friend_request':
-        return '👋';
-      case 'stat_update':
-        return '📊';
-      case 'achievement':
-        return '🏆';
+      case "new_post":
+        return "🍽️";
+      case "friend_request":
+        return "👋";
+      case "stat_update":
+        return "📊";
+      case "achievement":
+        return "🏆";
       default:
-        return '🔔';
+        return "🔔";
     }
   };
 

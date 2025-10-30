@@ -1,13 +1,19 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useAuth } from './AuthContext';
-import supabase from '../utils/supabaseClient';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
+import { useAuth } from "./AuthContext";
+import supabase from "../utils/supabaseClient";
 
 const SocialContext = createContext();
 
 export const useSocial = () => {
   const context = useContext(SocialContext);
   if (!context) {
-    throw new Error('useSocial must be used within a SocialProvider');
+    throw new Error("useSocial must be used within a SocialProvider");
   }
   return context;
 };
@@ -27,19 +33,19 @@ export const SocialProvider = ({ children }) => {
 
     try {
       const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', user.id)
+        .from("user_profiles")
+        .select("*")
+        .eq("id", user.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error loading profile:', error);
+      if (error && error.code !== "PGRST116") {
+        console.error("Error loading profile:", error);
         return;
       }
 
       setUserProfile(data);
     } catch (error) {
-      console.error('Error loading profile:', error);
+      console.error("Error loading profile:", error);
     }
   }, [user]);
 
@@ -51,12 +57,12 @@ export const SocialProvider = ({ children }) => {
       // For avatar-only updates, preserve existing profile data
       if (profileData.avatar_url && Object.keys(profileData).length === 1) {
         const { data, error } = await supabase
-          .from('user_profiles')
+          .from("user_profiles")
           .update({
             avatar_url: profileData.avatar_url,
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
           })
-          .eq('id', user.id)
+          .eq("id", user.id)
           .select()
           .single();
 
@@ -69,68 +75,74 @@ export const SocialProvider = ({ children }) => {
       }
 
       // For full profile updates, ensure username is provided
-      if (!profileData.username || profileData.username.trim() === '') {
-        throw new Error('Username is required');
+      if (!profileData.username || profileData.username.trim() === "") {
+        throw new Error("Username is required");
       }
 
       // Clean username (remove spaces, special characters, make lowercase)
-      const cleanUsername = profileData.username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
-      
+      const cleanUsername = profileData.username
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, "");
+
       if (cleanUsername.length < 3) {
-        throw new Error('Username must be at least 3 characters long');
+        throw new Error("Username must be at least 3 characters long");
       }
 
       // Try direct upsert first
       const { data, error } = await supabase
-        .from('user_profiles')
-        .upsert({
-          id: user.id,
-          ...profileData,
-          username: cleanUsername,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'id'
-        })
+        .from("user_profiles")
+        .upsert(
+          {
+            id: user.id,
+            ...profileData,
+            username: cleanUsername,
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: "id",
+          },
+        )
         .select()
         .single();
 
       if (error) {
         // If schema cache error, try insert instead
-        if (error.message.includes('schema cache')) {
+        if (error.message.includes("schema cache")) {
           const insertResult = await supabase
-            .from('user_profiles')
+            .from("user_profiles")
             .insert({
               id: user.id,
               username: cleanUsername,
               display_name: profileData.display_name || cleanUsername,
-              bio: profileData.bio || '',
+              bio: profileData.bio || "",
               is_private: profileData.is_private || false,
               created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
+              updated_at: new Date().toISOString(),
             })
             .select()
             .single();
 
           if (insertResult.error) {
             // If insert fails because record exists, try update
-            if (insertResult.error.code === '23505') {
+            if (insertResult.error.code === "23505") {
               const updateResult = await supabase
-                .from('user_profiles')
+                .from("user_profiles")
                 .update({
                   username: cleanUsername,
                   display_name: profileData.display_name,
                   bio: profileData.bio,
                   is_private: profileData.is_private,
-                  updated_at: new Date().toISOString()
+                  updated_at: new Date().toISOString(),
                 })
-                .eq('id', user.id)
+                .eq("id", user.id)
                 .select()
                 .single();
 
               if (updateResult.error) {
                 throw updateResult.error;
               }
-              
+
               setUserProfile(updateResult.data);
               return updateResult.data;
             } else {
@@ -141,19 +153,21 @@ export const SocialProvider = ({ children }) => {
           setUserProfile(insertResult.data);
           return insertResult.data;
         }
-        
+
         // Handle specific error cases
-        if (error.code === '23505' && error.message.includes('username')) {
-          throw new Error('This username is already taken. Please choose a different one.');
+        if (error.code === "23505" && error.message.includes("username")) {
+          throw new Error(
+            "This username is already taken. Please choose a different one.",
+          );
         }
-        
+
         throw error;
       }
 
       setUserProfile(data);
       return data;
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error("Error updating profile:", error);
       throw error;
     }
   };
@@ -162,95 +176,107 @@ export const SocialProvider = ({ children }) => {
   const loadFriends = useCallback(async () => {
     if (!user) return;
 
-    console.log('Loading friends and requests for user:', user.id);
+    console.log("Loading friends and requests for user:", user.id);
     try {
       // Get accepted friends
       const { data: friendsData, error: friendsError } = await supabase
-        .from('friendships')
-        .select('*')
+        .from("friendships")
+        .select("*")
         .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
-        .eq('status', 'accepted');
+        .eq("status", "accepted");
 
       if (friendsError) {
-        console.error('Friends loading error:', friendsError);
+        console.error("Friends loading error:", friendsError);
         throw friendsError;
       }
 
-      console.log('Friends data loaded:', friendsData);
+      console.log("Friends data loaded:", friendsData);
 
       // Get user profiles separately and match them
       const { data: allProfiles, error: profilesError } = await supabase
-        .from('user_profiles')
-        .select('*');
+        .from("user_profiles")
+        .select("*");
 
       if (profilesError) {
-        console.error('Profiles loading error:', profilesError);
+        console.error("Profiles loading error:", profilesError);
         throw profilesError;
       }
 
       // Process friends data to get the other person's profile
-      const processedFriends = friendsData?.map(friendship => {
-        const isRequester = friendship.requester_id === user.id;
-        const friendId = isRequester ? friendship.addressee_id : friendship.requester_id;
-        const friendProfile = allProfiles?.find(profile => profile.id === friendId);
-        
-        return {
-          ...friendship,
-          friend: friendProfile
-        };
-      }) || [];
+      const processedFriends =
+        friendsData?.map((friendship) => {
+          const isRequester = friendship.requester_id === user.id;
+          const friendId = isRequester
+            ? friendship.addressee_id
+            : friendship.requester_id;
+          const friendProfile = allProfiles?.find(
+            (profile) => profile.id === friendId,
+          );
+
+          return {
+            ...friendship,
+            friend: friendProfile,
+          };
+        }) || [];
 
       setFriends(processedFriends);
 
       // Get pending friend requests (received)
       const { data: requestsData, error: requestsError } = await supabase
-        .from('friendships')
-        .select('*')
-        .eq('addressee_id', user.id)
-        .eq('status', 'pending');
+        .from("friendships")
+        .select("*")
+        .eq("addressee_id", user.id)
+        .eq("status", "pending");
 
       if (requestsError) {
-        console.error('Friend requests loading error:', requestsError);
+        console.error("Friend requests loading error:", requestsError);
         throw requestsError;
       }
 
       // Get requester profiles separately
-      const processedRequests = requestsData?.map(request => {
-        const requesterProfile = allProfiles?.find(profile => profile.id === request.requester_id);
-        return {
-          ...request,
-          requester: requesterProfile
-        };
-      }) || [];
+      const processedRequests =
+        requestsData?.map((request) => {
+          const requesterProfile = allProfiles?.find(
+            (profile) => profile.id === request.requester_id,
+          );
+          return {
+            ...request,
+            requester: requesterProfile,
+          };
+        }) || [];
 
-      console.log('Friend requests data loaded:', processedRequests);
+      console.log("Friend requests data loaded:", processedRequests);
       setFriendRequests(processedRequests);
 
       // Get sent friend requests
-      const { data: sentRequestsData, error: sentRequestsError } = await supabase
-        .from('friendships')
-        .select('*')
-        .eq('requester_id', user.id)
-        .eq('status', 'pending');
+      const { data: sentRequestsData, error: sentRequestsError } =
+        await supabase
+          .from("friendships")
+          .select("*")
+          .eq("requester_id", user.id)
+          .eq("status", "pending");
 
       if (sentRequestsError) {
-        console.error('Sent requests loading error:', sentRequestsError);
+        console.error("Sent requests loading error:", sentRequestsError);
         throw sentRequestsError;
       }
 
       // Get addressee profiles separately
-      const processedSentRequests = sentRequestsData?.map(request => {
-        const addresseeProfile = allProfiles?.find(profile => profile.id === request.addressee_id);
-        return {
-          ...request,
-          addressee: addresseeProfile
-        };
-      }) || [];
+      const processedSentRequests =
+        sentRequestsData?.map((request) => {
+          const addresseeProfile = allProfiles?.find(
+            (profile) => profile.id === request.addressee_id,
+          );
+          return {
+            ...request,
+            addressee: addresseeProfile,
+          };
+        }) || [];
 
-      console.log('Sent requests data loaded:', processedSentRequests);
+      console.log("Sent requests data loaded:", processedSentRequests);
       setSentRequests(processedSentRequests);
     } catch (error) {
-      console.error('Error loading friends:', error);
+      console.error("Error loading friends:", error);
     }
   }, [user]);
 
@@ -258,62 +284,66 @@ export const SocialProvider = ({ children }) => {
   const sendFriendRequest = async (userId) => {
     if (!user) return;
 
-    console.log('Sending friend request:', { from: user.id, to: userId });
+    console.log("Sending friend request:", { from: user.id, to: userId });
     try {
       // First check if request already exists
       const { data: existingRequest, error: checkError } = await supabase
-        .from('friendships')
-        .select('*')
-        .or(`and(requester_id.eq.${user.id},addressee_id.eq.${userId}),and(requester_id.eq.${userId},addressee_id.eq.${user.id})`);
+        .from("friendships")
+        .select("*")
+        .or(
+          `and(requester_id.eq.${user.id},addressee_id.eq.${userId}),and(requester_id.eq.${userId},addressee_id.eq.${user.id})`,
+        );
 
       if (checkError) {
-        console.error('Error checking existing request:', checkError);
+        console.error("Error checking existing request:", checkError);
         throw checkError;
       }
 
       if (existingRequest && existingRequest.length > 0) {
-        console.log('Friend request already exists:', existingRequest);
-        throw new Error('Friend request already sent or you are already friends');
+        console.log("Friend request already exists:", existingRequest);
+        throw new Error(
+          "Friend request already sent or you are already friends",
+        );
       }
 
       const { data, error } = await supabase
-        .from('friendships')
+        .from("friendships")
         .insert({
           requester_id: user.id,
           addressee_id: userId,
-          status: 'pending'
+          status: "pending",
         })
         .select()
         .single();
 
       if (error) {
-        console.error('Friend request insert error:', error);
-        if (error.code === '23505') {
-          throw new Error('Friend request already sent');
+        console.error("Friend request insert error:", error);
+        if (error.code === "23505") {
+          throw new Error("Friend request already sent");
         }
         throw error;
       }
 
-      console.log('Friend request inserted:', data);
+      console.log("Friend request inserted:", data);
 
       // Create notification
       const { error: notificationError } = await supabase
-        .from('notifications')
+        .from("notifications")
         .insert({
           user_id: userId,
           from_user_id: user.id,
-          type: 'friend_request'
+          type: "friend_request",
         });
 
       if (notificationError) {
-        console.error('Notification error:', notificationError);
+        console.error("Notification error:", notificationError);
       } else {
-        console.log('Notification created successfully');
+        console.log("Notification created successfully");
       }
 
       return data;
     } catch (error) {
-      console.error('Error sending friend request:', error);
+      console.error("Error sending friend request:", error);
       throw error;
     }
   };
@@ -322,9 +352,9 @@ export const SocialProvider = ({ children }) => {
   const acceptFriendRequest = async (requestId) => {
     try {
       const { data, error } = await supabase
-        .from('friendships')
-        .update({ status: 'accepted' })
-        .eq('id', requestId)
+        .from("friendships")
+        .update({ status: "accepted" })
+        .eq("id", requestId)
         .select()
         .single();
 
@@ -334,7 +364,7 @@ export const SocialProvider = ({ children }) => {
       loadFriends();
       return data;
     } catch (error) {
-      console.error('Error accepting friend request:', error);
+      console.error("Error accepting friend request:", error);
       throw error;
     }
   };
@@ -343,16 +373,16 @@ export const SocialProvider = ({ children }) => {
   const declineFriendRequest = async (requestId) => {
     try {
       const { error } = await supabase
-        .from('friendships')
+        .from("friendships")
         .delete()
-        .eq('id', requestId);
+        .eq("id", requestId);
 
       if (error) throw error;
 
       // Reload friends data
       loadFriends();
     } catch (error) {
-      console.error('Error declining friend request:', error);
+      console.error("Error declining friend request:", error);
       throw error;
     }
   };
@@ -361,41 +391,41 @@ export const SocialProvider = ({ children }) => {
   const cancelFriendRequest = async (requestId) => {
     try {
       const { error } = await supabase
-        .from('friendships')
+        .from("friendships")
         .delete()
-        .eq('id', requestId)
-        .eq('requester_id', user.id);
+        .eq("id", requestId)
+        .eq("requester_id", user.id);
 
       if (error) throw error;
 
       // Reload friends data to update sent requests
       loadFriends();
     } catch (error) {
-      console.error('Error canceling friend request:', error);
+      console.error("Error canceling friend request:", error);
       throw error;
     }
   };
 
   // Search users
   const searchUsers = async (query) => {
-    console.log('Searching users with query:', query);
+    console.log("Searching users with query:", query);
     try {
       const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
+        .from("user_profiles")
+        .select("*")
         .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
-        .neq('id', user?.id)
+        .neq("id", user?.id)
         .limit(20);
 
       if (error) {
-        console.error('Search users error:', error);
+        console.error("Search users error:", error);
         throw error;
       }
-      
-      console.log('Search results:', data);
+
+      console.log("Search results:", data);
       return data || [];
     } catch (error) {
-      console.error('Error searching users:', error);
+      console.error("Error searching users:", error);
       return [];
     }
   };
@@ -406,10 +436,10 @@ export const SocialProvider = ({ children }) => {
 
     try {
       const { data, error } = await supabase
-        .from('entry_likes')
+        .from("entry_likes")
         .insert({
           user_id: user.id,
-          entry_id: entryId
+          entry_id: entryId,
         })
         .select()
         .single();
@@ -418,40 +448,38 @@ export const SocialProvider = ({ children }) => {
 
       // Get entry owner and details to create notification
       const { data: entryData } = await supabase
-        .from('entries')
-        .select('user_id, title')
-        .eq('id', entryId)
+        .from("entries")
+        .select("user_id, title")
+        .eq("id", entryId)
         .single();
 
       if (entryData && entryData.user_id !== user.id) {
         // Get username of person who liked
         const { data: profileData } = await supabase
-          .from('user_profiles')
-          .select('username')
-          .eq('id', user.id)
+          .from("user_profiles")
+          .select("username")
+          .eq("id", user.id)
           .single();
 
-        const username = profileData?.username || 'Someone';
-        const entryTitle = entryData.title || 'your post';
+        const username = profileData?.username || "Someone";
+        const entryTitle = entryData.title || "your post";
 
-        await supabase
-          .from('notifications')
-          .insert({
-            user_id: entryData.user_id,
-            type: 'like',
-            title: `${username} liked your post! ❤️`,
-            message: `${username} liked your post: ${entryTitle}`,
-            data: {
-              postId: entryId,
-              userId: user.id,
-              username: username
-            }
-          });
+        await supabase.from("notifications").insert({
+          user_id: entryData.user_id,
+          type: "like",
+          title: `${username} liked your post! ❤️`,
+          message: `${username} liked your post: ${entryTitle}`,
+          data: {
+            postId: entryId,
+            userId: user.id,
+            username: username,
+          },
+        });
       }
 
       return data;
     } catch (error) {
-      console.error('Error liking entry:', error);
+      console.error("Error liking entry:", error);
       throw error;
     }
   };
@@ -462,14 +490,14 @@ export const SocialProvider = ({ children }) => {
 
     try {
       const { error } = await supabase
-        .from('entry_likes')
+        .from("entry_likes")
         .delete()
-        .eq('user_id', user.id)
-        .eq('entry_id', entryId);
+        .eq("user_id", user.id)
+        .eq("entry_id", entryId);
 
       if (error) throw error;
     } catch (error) {
-      console.error('Error unliking entry:', error);
+      console.error("Error unliking entry:", error);
       throw error;
     }
   };
@@ -480,10 +508,10 @@ export const SocialProvider = ({ children }) => {
 
     try {
       const { data, error } = await supabase
-        .from('entry_saves')
+        .from("entry_saves")
         .insert({
           user_id: user.id,
-          entry_id: entryId
+          entry_id: entryId,
         })
         .select()
         .single();
@@ -492,40 +520,38 @@ export const SocialProvider = ({ children }) => {
 
       // Get entry owner and details to create notification
       const { data: entryData } = await supabase
-        .from('entries')
-        .select('user_id, title')
-        .eq('id', entryId)
+        .from("entries")
+        .select("user_id, title")
+        .eq("id", entryId)
         .single();
 
       if (entryData && entryData.user_id !== user.id) {
         // Get username of person who saved
         const { data: profileData } = await supabase
-          .from('user_profiles')
-          .select('username')
-          .eq('id', user.id)
+          .from("user_profiles")
+          .select("username")
+          .eq("id", user.id)
           .single();
 
-        const username = profileData?.username || 'Someone';
-        const entryTitle = entryData.title || 'your post';
+        const username = profileData?.username || "Someone";
+        const entryTitle = entryData.title || "your post";
 
-        await supabase
-          .from('notifications')
-          .insert({
-            user_id: entryData.user_id,
-            type: 'entry_save',
-            title: `${username} saved your post! 🔖`,
-            message: `${username} saved your post: ${entryTitle}`,
-            data: {
-              postId: entryId,
-              userId: user.id,
-              username: username
-            }
-          });
+        await supabase.from("notifications").insert({
+          user_id: entryData.user_id,
+          type: "entry_save",
+          title: `${username} saved your post! 🔖`,
+          message: `${username} saved your post: ${entryTitle}`,
+          data: {
+            postId: entryId,
+            userId: user.id,
+            username: username,
+          },
+        });
       }
 
       return data;
     } catch (error) {
-      console.error('Error saving entry:', error);
+      console.error("Error saving entry:", error);
       throw error;
     }
   };
@@ -536,14 +562,14 @@ export const SocialProvider = ({ children }) => {
 
     try {
       const { error } = await supabase
-        .from('entry_saves')
+        .from("entry_saves")
         .delete()
-        .eq('user_id', user.id)
-        .eq('entry_id', entryId);
+        .eq("user_id", user.id)
+        .eq("entry_id", entryId);
 
       if (error) throw error;
     } catch (error) {
-      console.error('Error unsaving entry:', error);
+      console.error("Error unsaving entry:", error);
       throw error;
     }
   };
@@ -555,70 +581,70 @@ export const SocialProvider = ({ children }) => {
     try {
       // First, get the entry IDs that are saved
       const { data: saves, error: savesError } = await supabase
-        .from('entry_saves')
-        .select('entry_id, created_at')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .from("entry_saves")
+        .select("entry_id, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
       if (savesError) {
-        console.error('Error fetching saved entry IDs:', savesError);
+        console.error("Error fetching saved entry IDs:", savesError);
         throw savesError;
       }
 
       if (!saves || saves.length === 0) {
-        console.log('No saved entries found');
+        console.log("No saved entries found");
         return [];
       }
 
-      console.log('Saved entry IDs:', saves);
+      console.log("Saved entry IDs:", saves);
 
       // Fetch entries
-      const entryIds = saves.map(save => save.entry_id);
+      const entryIds = saves.map((save) => save.entry_id);
       const { data: entries, error: entriesError } = await supabase
-        .from('entries')
-        .select('*')
-        .in('id', entryIds);
+        .from("entries")
+        .select("*")
+        .in("id", entryIds);
 
       if (entriesError) {
-        console.error('Error fetching entries:', entriesError);
+        console.error("Error fetching entries:", entriesError);
         throw entriesError;
       }
 
-      console.log('Fetched entries:', entries);
+      console.log("Fetched entries:", entries);
 
       // Fetch user profiles separately for each entry
-      const userIds = [...new Set(entries?.map(e => e.user_id) || [])];
+      const userIds = [...new Set(entries?.map((e) => e.user_id) || [])];
       const { data: profiles, error: profilesError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .in('id', userIds);
+        .from("user_profiles")
+        .select("*")
+        .in("id", userIds);
 
       if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
+        console.error("Error fetching profiles:", profilesError);
       }
 
-      console.log('Fetched profiles:', profiles);
+      console.log("Fetched profiles:", profiles);
 
       // Transform the data to match the feed format and maintain save order
       const savedEntries = saves
-        .map(save => {
-          const entry = entries?.find(e => e.id === save.entry_id);
+        .map((save) => {
+          const entry = entries?.find((e) => e.id === save.entry_id);
           if (!entry) return null;
-          
-          const userProfile = profiles?.find(p => p.id === entry.user_id);
-          
+
+          const userProfile = profiles?.find((p) => p.id === entry.user_id);
+
           return {
             ...entry,
             user: userProfile,
-            isSaved: true
+            isSaved: true,
           };
         })
-        .filter(entry => entry !== null);
+        .filter((entry) => entry !== null);
 
-      console.log('Transformed saved entries:', savedEntries);
+      console.log("Transformed saved entries:", savedEntries);
       return savedEntries;
     } catch (error) {
-      console.error('Error getting saved entries:', error);
+      console.error("Error getting saved entries:", error);
       return [];
     }
   };
@@ -628,75 +654,73 @@ export const SocialProvider = ({ children }) => {
     if (!user) return;
 
     try {
-      console.log('Adding comment:', { entryId, content, userId: user.id });
-      
+      console.log("Adding comment:", { entryId, content, userId: user.id });
+
       const { data, error } = await supabase
-        .from('entry_comments')
+        .from("entry_comments")
         .insert({
           user_id: user.id,
           entry_id: entryId,
-          content
+          content,
         })
         .select()
         .single();
 
       if (error) {
-        console.error('Comment insert error:', error);
+        console.error("Comment insert error:", error);
         throw error;
       }
 
-      console.log('Comment inserted:', data);
+      console.log("Comment inserted:", data);
 
       // Get user profile separately
       const { data: userProfile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', user.id)
+        .from("user_profiles")
+        .select("*")
+        .eq("id", user.id)
         .single();
 
       if (profileError) {
-        console.error('Profile fetch error:', profileError);
+        console.error("Profile fetch error:", profileError);
         // Continue even if profile fetch fails
       }
 
       // Get entry owner and details to create notification
       const { data: entryData } = await supabase
-        .from('entries')
-        .select('user_id, title')
-        .eq('id', entryId)
+        .from("entries")
+        .select("user_id, title")
+        .eq("id", entryId)
         .single();
 
       if (entryData && entryData.user_id !== user.id) {
-        const username = userProfile?.username || 'Someone';
-        const entryTitle = entryData.title || 'your post';
-        
-        await supabase
-          .from('notifications')
-          .insert({
-            user_id: entryData.user_id,
-            type: 'comment',
-            title: `${username} commented on your post! 💬`,
-            message: `${username} commented on: ${entryTitle}`,
-            data: {
-              postId: entryId,
-              commentId: data.id,
-              userId: user.id,
-              username: username,
-              commentContent: content.substring(0, 100)
-            }
-          });
+        const username = userProfile?.username || "Someone";
+        const entryTitle = entryData.title || "your post";
+
+        await supabase.from("notifications").insert({
+          user_id: entryData.user_id,
+          type: "comment",
+          title: `${username} commented on your post! 💬`,
+          message: `${username} commented on: ${entryTitle}`,
+          data: {
+            postId: entryId,
+            commentId: data.id,
+            userId: user.id,
+            username: username,
+            commentContent: content.substring(0, 100),
+          },
+        });
       }
 
       // Combine comment with user profile
       const commentWithProfile = {
         ...data,
-        user_profile: userProfile
+        user_profile: userProfile,
       };
 
-      console.log('Comment with profile:', commentWithProfile);
+      console.log("Comment with profile:", commentWithProfile);
       return commentWithProfile;
     } catch (error) {
-      console.error('Error adding comment:', error);
+      console.error("Error adding comment:", error);
       throw error;
     }
   };
@@ -706,92 +730,103 @@ export const SocialProvider = ({ children }) => {
     if (!user) return [];
 
     try {
-      console.log('Loading social feed...');
-      
+      console.log("Loading social feed...");
+
       // Get entries without joins first
       const { data: entriesData, error: entriesError } = await supabase
-        .from('entries')
-        .select('*')
-        .order('created_at', { ascending: false })
+        .from("entries")
+        .select("*")
+        .order("created_at", { ascending: false })
         .range(offset, offset + limit - 1);
 
       if (entriesError) {
-        console.error('Entries loading error:', entriesError);
+        console.error("Entries loading error:", entriesError);
         throw entriesError;
       }
 
-      console.log('Entries loaded:', entriesData);
+      console.log("Entries loaded:", entriesData);
 
       if (!entriesData || entriesData.length === 0) {
         return [];
       }
 
       // Get user profiles for all entries
-      const userIds = [...new Set(entriesData.map(entry => entry.user_id))];
+      const userIds = [...new Set(entriesData.map((entry) => entry.user_id))];
       const { data: profilesData, error: profilesError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .in('id', userIds);
+        .from("user_profiles")
+        .select("*")
+        .in("id", userIds);
 
       if (profilesError) {
-        console.error('Profiles loading error:', profilesError);
+        console.error("Profiles loading error:", profilesError);
         throw profilesError;
       }
 
       // Get likes for current user
-      const entryIds = entriesData.map(entry => entry.id);
+      const entryIds = entriesData.map((entry) => entry.id);
       const { data: likesData, error: likesError } = await supabase
-        .from('entry_likes')
-        .select('*')
-        .in('entry_id', entryIds);
+        .from("entry_likes")
+        .select("*")
+        .in("entry_id", entryIds);
 
       if (likesError) {
-        console.error('Likes loading error:', likesError);
+        console.error("Likes loading error:", likesError);
       }
 
       // Get saves for current user
       const { data: savesData, error: savesError } = await supabase
-        .from('entry_saves')
-        .select('*')
-        .in('entry_id', entryIds);
+        .from("entry_saves")
+        .select("*")
+        .in("entry_id", entryIds);
 
       if (savesError) {
-        console.error('Saves loading error:', savesError);
+        console.error("Saves loading error:", savesError);
       }
 
       // Get comments for entries
       const { data: commentsData, error: commentsError } = await supabase
-        .from('entry_comments')
-        .select('*')
-        .in('entry_id', entryIds)
-        .order('created_at', { ascending: true });
+        .from("entry_comments")
+        .select("*")
+        .in("entry_id", entryIds)
+        .order("created_at", { ascending: true });
 
       if (commentsError) {
-        console.error('Comments loading error:', commentsError);
+        console.error("Comments loading error:", commentsError);
       }
 
       // Get comment user profiles
-      const commentUserIds = [...new Set((commentsData || []).map(comment => comment.user_id))];
-      const { data: commentProfilesData, error: commentProfilesError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .in('id', commentUserIds);
+      const commentUserIds = [
+        ...new Set((commentsData || []).map((comment) => comment.user_id)),
+      ];
+      const { data: commentProfilesData, error: commentProfilesError } =
+        await supabase
+          .from("user_profiles")
+          .select("*")
+          .in("id", commentUserIds);
 
       if (commentProfilesError) {
-        console.error('Comment profiles loading error:', commentProfilesError);
+        console.error("Comment profiles loading error:", commentProfilesError);
       }
 
       // Process and combine data
-      const processedEntries = entriesData.map(entry => {
-        const userProfile = profilesData?.find(profile => profile.id === entry.user_id);
-        const entryLikes = likesData?.filter(like => like.entry_id === entry.id) || [];
-        const entrySaves = savesData?.filter(save => save.entry_id === entry.id) || [];
-        const entryComments = commentsData?.filter(comment => comment.entry_id === entry.id) || [];
-        
+      const processedEntries = entriesData.map((entry) => {
+        const userProfile = profilesData?.find(
+          (profile) => profile.id === entry.user_id,
+        );
+        const entryLikes =
+          likesData?.filter((like) => like.entry_id === entry.id) || [];
+        const entrySaves =
+          savesData?.filter((save) => save.entry_id === entry.id) || [];
+        const entryComments =
+          commentsData?.filter((comment) => comment.entry_id === entry.id) ||
+          [];
+
         // Add user profiles to comments
-        const processedComments = entryComments.map(comment => ({
+        const processedComments = entryComments.map((comment) => ({
           ...comment,
-          user_profile: commentProfilesData?.find(profile => profile.id === comment.user_id)
+          user_profile: commentProfilesData?.find(
+            (profile) => profile.id === comment.user_id,
+          ),
         }));
 
         return {
@@ -800,16 +835,16 @@ export const SocialProvider = ({ children }) => {
           likes: entryLikes,
           saves: entrySaves,
           comments: processedComments,
-          isLiked: entryLikes.some(like => like.user_id === user.id),
-          isSaved: entrySaves.some(save => save.user_id === user.id),
-          likesCount: entryLikes.length
+          isLiked: entryLikes.some((like) => like.user_id === user.id),
+          isSaved: entrySaves.some((save) => save.user_id === user.id),
+          likesCount: entryLikes.length,
         };
       });
 
-      console.log('Processed entries:', processedEntries);
+      console.log("Processed entries:", processedEntries);
       return processedEntries;
     } catch (error) {
-      console.error('Error getting social feed:', error);
+      console.error("Error getting social feed:", error);
       return [];
     }
   };
@@ -819,10 +854,7 @@ export const SocialProvider = ({ children }) => {
     const loadUserData = async () => {
       if (user) {
         setLoading(true);
-        await Promise.all([
-          loadUserProfile(),
-          loadFriends()
-        ]);
+        await Promise.all([loadUserProfile(), loadFriends()]);
         setLoading(false);
       } else {
         setUserProfile(null);
@@ -857,12 +889,10 @@ export const SocialProvider = ({ children }) => {
     getSavedEntries,
     addComment,
     getSocialFeed,
-    loadFriends
+    loadFriends,
   };
 
   return (
-    <SocialContext.Provider value={value}>
-      {children}
-    </SocialContext.Provider>
+    <SocialContext.Provider value={value}>{children}</SocialContext.Provider>
   );
 };

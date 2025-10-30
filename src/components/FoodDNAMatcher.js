@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useSocial } from '../context/SocialContext';
-import { useEntries } from '../context/EntriesContext';
+import React, { useState, useEffect, useCallback } from "react";
+import { useSocial } from "../context/SocialContext";
+import { useEntries } from "../context/EntriesContext";
 
 const FoodDNAMatcher = () => {
   const { friends, getSocialFeed } = useSocial();
@@ -9,23 +9,13 @@ const FoodDNAMatcher = () => {
   const [compatibilityData, setCompatibilityData] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [animationStep, setAnimationStep] = useState(0);
-  const [isLocked, setIsLocked] = useState(true);
-
-  // Require 5 friends to unlock Food DNA Matcher
-  const canUnlock = friends.length >= 5;
-
-  const handleUnlockAttempt = () => {
-    if (canUnlock) {
-      setIsLocked(false);
-    }
-  };
 
   const loadAnalysisData = useCallback(async () => {
     try {
       const socialEntries = await getSocialFeed(100);
       setAllEntries(socialEntries);
     } catch (error) {
-      console.error('Error loading analysis data:', error);
+      console.error("Error loading analysis data:", error);
     }
   }, [getSocialFeed]);
 
@@ -33,7 +23,7 @@ const FoodDNAMatcher = () => {
     loadAnalysisData();
     // Animation sequence
     const timer = setInterval(() => {
-      setAnimationStep(prev => (prev + 1) % 4);
+      setAnimationStep((prev) => (prev + 1) % 4);
     }, 2000);
     return () => clearInterval(timer);
   }, [loadAnalysisData]);
@@ -44,21 +34,31 @@ const FoodDNAMatcher = () => {
   }, [friends, userEntries, allEntries]);
 
   const analyzeCompatibility = () => {
-    const compatibility = friends.map(friendship => {
-      const friendEntries = allEntries.filter(entry => entry.user_id === friendship.friend.id);
+    const compatibility = friends.map((friendship) => {
+      const friendEntries = allEntries.filter(
+        (entry) => entry.user_id === friendship.friend.id,
+      );
       const userFoodProfile = createFoodProfile(userEntries);
       const friendFoodProfile = createFoodProfile(friendEntries);
-      const compatibility = calculateCompatibility(userFoodProfile, friendFoodProfile);
-      
+      const compatibility = calculateCompatibility(
+        userFoodProfile,
+        friendFoodProfile,
+      );
+
       return {
         ...friendship,
         compatibility,
         sharedTastes: findSharedTastes(userFoodProfile, friendFoodProfile),
-        recommendations: generateRecommendations(userFoodProfile, friendFoodProfile)
+        recommendations: generateRecommendations(
+          userFoodProfile,
+          friendFoodProfile,
+        ),
       };
     });
-    
-    setCompatibilityData(compatibility.sort((a, b) => b.compatibility - a.compatibility));
+
+    setCompatibilityData(
+      compatibility.sort((a, b) => b.compatibility - a.compatibility),
+    );
   };
 
   const createFoodProfile = (entries) => {
@@ -69,26 +69,30 @@ const FoodDNAMatcher = () => {
       adventurous: 0,
       sweetTooth: 0,
       spiceLover: 0,
-      healthConscious: 0
+      healthConscious: 0,
     };
 
-    entries.forEach(entry => {
+    entries.forEach((entry) => {
       // Cuisine analysis
-      entry.tags?.forEach(tag => {
+      entry.tags?.forEach((tag) => {
         const cuisine = tag.toLowerCase();
         profile.cuisines[cuisine] = (profile.cuisines[cuisine] || 0) + 1;
-        
+
         // Personality traits based on food choices
-        if (['exotic', 'fusion', 'experimental'].includes(cuisine)) {
+        if (["exotic", "fusion", "experimental"].includes(cuisine)) {
           profile.adventurous += 1;
         }
-        if (['dessert', 'sweet', 'cake', 'ice cream'].includes(cuisine)) {
+        if (["dessert", "sweet", "cake", "ice cream"].includes(cuisine)) {
           profile.sweetTooth += 1;
         }
-        if (['spicy', 'hot', 'chili', 'thai', 'indian'].includes(cuisine)) {
+        if (["spicy", "hot", "chili", "thai", "indian"].includes(cuisine)) {
           profile.spiceLover += 1;
         }
-        if (['salad', 'healthy', 'organic', 'vegan', 'vegetarian'].includes(cuisine)) {
+        if (
+          ["salad", "healthy", "organic", "vegan", "vegetarian"].includes(
+            cuisine,
+          )
+        ) {
           profile.healthConscious += 1;
         }
       });
@@ -96,25 +100,39 @@ const FoodDNAMatcher = () => {
       // Location-based analysis
       if (entry.location) {
         const location = entry.location.toLowerCase();
-        if (location.includes('food truck') || location.includes('street')) {
+        if (location.includes("food truck") || location.includes("street")) {
           profile.adventurous += 0.5;
         }
-        if (location.includes('fine dining') || location.includes('michelin')) {
+        if (location.includes("fine dining") || location.includes("michelin")) {
           profile.adventurous += 1;
         }
       }
     });
 
-    profile.avgRating = entries.length > 0 
-      ? entries.reduce((sum, entry) => sum + (entry.rating || 0), 0) / entries.length 
-      : 0;
+    profile.avgRating =
+      entries.length > 0
+        ? entries.reduce((sum, entry) => sum + (entry.rating || 0), 0) /
+          entries.length
+        : 0;
 
     // Normalize traits
     const totalEntries = entries.length || 1;
-    profile.adventurous = Math.min(profile.adventurous / totalEntries * 100, 100);
-    profile.sweetTooth = Math.min(profile.sweetTooth / totalEntries * 100, 100);
-    profile.spiceLover = Math.min(profile.spiceLover / totalEntries * 100, 100);
-    profile.healthConscious = Math.min(profile.healthConscious / totalEntries * 100, 100);
+    profile.adventurous = Math.min(
+      (profile.adventurous / totalEntries) * 100,
+      100,
+    );
+    profile.sweetTooth = Math.min(
+      (profile.sweetTooth / totalEntries) * 100,
+      100,
+    );
+    profile.spiceLover = Math.min(
+      (profile.spiceLover / totalEntries) * 100,
+      100,
+    );
+    profile.healthConscious = Math.min(
+      (profile.healthConscious / totalEntries) * 100,
+      100,
+    );
 
     return profile;
   };
@@ -124,11 +142,16 @@ const FoodDNAMatcher = () => {
 
     // Rating similarity (30% weight)
     const ratingDiff = Math.abs(profile1.avgRating - profile2.avgRating);
-    compatibility += (5 - ratingDiff) / 5 * 30;
+    compatibility += ((5 - ratingDiff) / 5) * 30;
 
     // Trait similarity (70% weight)
-    const traits = ['adventurous', 'sweetTooth', 'spiceLover', 'healthConscious'];
-    traits.forEach(trait => {
+    const traits = [
+      "adventurous",
+      "sweetTooth",
+      "spiceLover",
+      "healthConscious",
+    ];
+    traits.forEach((trait) => {
       const diff = Math.abs(profile1[trait] - profile2[trait]);
       compatibility += (100 - diff) * 0.175; // 70% / 4 traits = 17.5% each
     });
@@ -138,24 +161,31 @@ const FoodDNAMatcher = () => {
 
   const findSharedTastes = (profile1, profile2) => {
     const shared = [];
-    Object.keys(profile1.cuisines).forEach(cuisine => {
+    Object.keys(profile1.cuisines).forEach((cuisine) => {
       if (profile2.cuisines[cuisine]) {
         shared.push({
           cuisine,
           userCount: profile1.cuisines[cuisine],
-          friendCount: profile2.cuisines[cuisine]
+          friendCount: profile2.cuisines[cuisine],
         });
       }
     });
-    return shared.sort((a, b) => (b.userCount + b.friendCount) - (a.userCount + a.friendCount)).slice(0, 5);
+    return shared
+      .sort(
+        (a, b) => b.userCount + b.friendCount - (a.userCount + a.friendCount),
+      )
+      .slice(0, 5);
   };
 
   const generateRecommendations = (profile1, profile2) => {
     const recommendations = [];
-    
+
     // Find cuisines the friend loves that the user hasn't tried much
     Object.entries(profile2.cuisines).forEach(([cuisine, count]) => {
-      if (count >= 3 && (!profile1.cuisines[cuisine] || profile1.cuisines[cuisine] < 2)) {
+      if (
+        count >= 3 &&
+        (!profile1.cuisines[cuisine] || profile1.cuisines[cuisine] < 2)
+      ) {
         recommendations.push(`Try more ${cuisine} dishes`);
       }
     });
@@ -164,10 +194,10 @@ const FoodDNAMatcher = () => {
   };
 
   const getCompatibilityEmoji = (score) => {
-    if (score >= 80) return '🔥';
-    if (score >= 60) return '👍';
-    if (score >= 40) return '🤝';
-    return '🤔';
+    if (score >= 80) return "🔥";
+    if (score >= 60) return "👍";
+    if (score >= 40) return "🤝";
+    return "🤔";
   };
 
   const DNAHelix = ({ compatibility, animate }) => (
@@ -180,23 +210,23 @@ const FoodDNAMatcher = () => {
             <stop offset="100%" stopColor="#F59E0B" />
           </linearGradient>
         </defs>
-        
+
         {/* DNA strands */}
         <path
           d="M15 10 Q30 20 15 30 Q30 40 15 50 Q30 60 15 70"
           stroke="url(#dna-gradient)"
           strokeWidth="3"
           fill="none"
-          className={animate ? 'animate-pulse' : ''}
+          className={animate ? "animate-pulse" : ""}
         />
         <path
           d="M45 10 Q30 20 45 30 Q30 40 45 50 Q30 60 45 70"
           stroke="url(#dna-gradient)"
           strokeWidth="3"
           fill="none"
-          className={animate ? 'animate-pulse' : ''}
+          className={animate ? "animate-pulse" : ""}
         />
-        
+
         {/* Connection lines */}
         {[20, 40, 60].map((y, i) => (
           <line
@@ -208,66 +238,19 @@ const FoodDNAMatcher = () => {
             stroke="url(#dna-gradient)"
             strokeWidth="2"
             opacity={compatibility > (i + 1) * 25 ? 1 : 0.3}
-            className={animate ? 'animate-pulse' : ''}
+            className={animate ? "animate-pulse" : ""}
           />
         ))}
       </svg>
-      
+
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-xs font-bold text-white">
-          {compatibility}%
-        </span>
+        <span className="text-xs font-bold text-white">{compatibility}%</span>
       </div>
     </div>
   );
 
   return (
     <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 rounded-2xl p-4 md:p-6 relative overflow-hidden">
-      {/* Locked State */}
-      {isLocked && (
-        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-20 flex items-center justify-center rounded-2xl">
-          <div className="text-center max-w-xs px-4">
-            <div className="text-4xl md:text-5xl mb-3">🧬</div>
-            <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2">Food DNA Locked</h3>
-            <p className="text-gray-600 text-xs md:text-sm mb-4 leading-relaxed">
-              Add {5 - friends.length} more friend{5 - friends.length !== 1 ? 's' : ''} to unlock food compatibility analysis!
-            </p>
-            <div className="flex items-center justify-center space-x-2 mb-4">
-              <div className="flex -space-x-1">
-                {[...Array(5)].map((_, i) => (
-                  <div
-                    key={i}
-                    className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 border-white flex items-center justify-center text-xs ${
-                      i < friends.length 
-                        ? 'bg-purple-500 text-white' 
-                        : 'bg-gray-300 text-gray-600'
-                    }`}
-                  >
-                    {i < friends.length ? '✓' : '👤'}
-                  </div>
-                ))}
-              </div>
-              <span className="text-xs md:text-sm text-gray-500">{friends.length}/5</span>
-            </div>
-            {canUnlock ? (
-              <button
-                onClick={handleUnlockAttempt}
-                className="px-4 py-2 md:px-6 md:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-sm font-medium hover:from-purple-600 hover:to-pink-600 transition-all"
-              >
-                🧬 Unlock DNA Matcher!
-              </button>
-            ) : (
-              <button
-                onClick={() => window.location.href = '#friends'}
-                className="px-4 py-2 md:px-6 md:py-3 bg-gray-100 text-gray-700 rounded-full text-sm font-medium hover:bg-gray-200 transition-all"
-              >
-                Find More Friends
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Animated DNA background */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-0 left-0 w-full h-full">
@@ -278,7 +261,7 @@ const FoodDNAMatcher = () => {
               style={{
                 left: `${20 + i * 15}%`,
                 top: `${10 + (i % 3) * 30}%`,
-                animationDelay: `${i * 0.5}s`
+                animationDelay: `${i * 0.5}s`,
               }}
             />
           ))}
@@ -295,7 +278,25 @@ const FoodDNAMatcher = () => {
           </p>
         </div>
 
-        {compatibilityData.length === 0 ? (
+        {friends.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-20 h-20 mx-auto mb-4 bg-white/70 backdrop-blur-sm rounded-full flex items-center justify-center border-2 border-purple-200">
+              <span className="text-3xl">👥</span>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Add Friends to Compare
+            </h3>
+            <p className="text-gray-600 text-sm mb-6 max-w-xs mx-auto">
+              Connect with friends to discover shared tastes and food compatibility
+            </p>
+            <button
+              onClick={() => (window.location.href = "/profile")}
+              className="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-sm font-medium hover:from-purple-600 hover:to-pink-600 transition-all"
+            >
+              Find Friends
+            </button>
+          </div>
+        ) : compatibilityData.length === 0 ? (
           <div className="text-center py-8">
             <div className="w-16 h-16 mx-auto mb-4 border-2 border-purple-200 border-t-purple-500 rounded-full animate-spin"></div>
             <p className="text-gray-500">Analyzing food DNA...</p>
@@ -306,36 +307,46 @@ const FoodDNAMatcher = () => {
               <div
                 key={friendData.id}
                 className="bg-white/70 backdrop-blur-sm rounded-2xl p-4 border border-white/20 cursor-pointer transition-all duration-300 hover:bg-white/80 hover:scale-[1.02]"
-                onClick={() => setSelectedFriend(selectedFriend?.id === friendData.id ? null : friendData)}
+                onClick={() =>
+                  setSelectedFriend(
+                    selectedFriend?.id === friendData.id ? null : friendData,
+                  )
+                }
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center text-white font-medium">
-                      {friendData.friend.display_name?.charAt(0)?.toUpperCase() || 'U'}
+                  <div className="flex items-center space-x-3 flex-1">
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center text-white font-medium flex-shrink-0">
+                      {friendData.friend.display_name
+                        ?.charAt(0)
+                        ?.toUpperCase() || "U"}
                     </div>
-                    <div>
-                      <h3 className="font-medium text-gray-900">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-gray-900 truncate">
                         {friendData.friend.display_name}
                       </h3>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 truncate">
                         @{friendData.friend.username}
                       </p>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center space-x-4">
-                    <DNAHelix 
-                      compatibility={friendData.compatibility} 
+
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <DNAHelix
+                      compatibility={friendData.compatibility}
                       animate={animationStep === index % 4}
                     />
-                    <div className="text-center">
-                      <div className="text-2xl">
+                    <div className="text-center min-w-[80px]">
+                      <div className="text-2xl mb-0.5">
                         {getCompatibilityEmoji(friendData.compatibility)}
                       </div>
-                      <div className="text-xs text-gray-500">
-                        {friendData.compatibility >= 80 ? 'Soul Food' :
-                         friendData.compatibility >= 60 ? 'Great Match' :
-                         friendData.compatibility >= 40 ? 'Good Vibes' : 'Different Tastes'}
+                      <div className="text-xs text-gray-600 font-medium leading-tight">
+                        {friendData.compatibility >= 80
+                          ? "Soul Food"
+                          : friendData.compatibility >= 60
+                            ? "Great Match"
+                            : friendData.compatibility >= 40
+                              ? "Good Vibes"
+                              : "Different Tastes"}
                       </div>
                     </div>
                   </div>
@@ -355,7 +366,8 @@ const FoodDNAMatcher = () => {
                               key={i}
                               className="px-3 py-1 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 text-xs rounded-full border border-purple-200"
                             >
-                              {taste.cuisine} ({taste.userCount + taste.friendCount})
+                              {taste.cuisine} (
+                              {taste.userCount + taste.friendCount})
                             </span>
                           ))}
                         </div>
@@ -390,17 +402,23 @@ const FoodDNAMatcher = () => {
         )}
 
         {/* Fun Facts */}
-        <div className="mt-6 bg-white/50 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
-          <h3 className="text-sm font-medium text-gray-900 mb-2">🔬 Food Science Facts</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-gray-600">
-            <div>
-              <span className="font-medium">Did you know?</span> People with similar food preferences often share personality traits!
-            </div>
-            <div>
-              <span className="font-medium">Fun fact:</span> Spice tolerance is influenced by genetics and culture.
+        {friends.length > 0 && (
+          <div className="mt-6 bg-white/50 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+            <h3 className="text-sm font-medium text-gray-900 mb-2">
+              🔬 Food Science Facts
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-gray-600">
+              <div>
+                <span className="font-medium">Did you know?</span> People with
+                similar food preferences often share personality traits!
+              </div>
+              <div>
+                <span className="font-medium">Fun fact:</span> Spice tolerance is
+                influenced by genetics and culture.
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
