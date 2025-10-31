@@ -20,17 +20,6 @@ const FitBounds = ({ locations }) => {
   return null;
 };
 
-// Simple marker icon fix without require()
-const icon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
 // Custom marker icon with food emoji
 const createCustomIcon = (rating) => {
   const color = rating >= 4 ? '#22c55e' : rating >= 3 ? '#eab308' : '#ef4444';
@@ -60,17 +49,6 @@ const createCustomIcon = (rating) => {
     popupAnchor: [0, -32],
   });
 };
-
-// eslint-disable-next-line no-unused-vars
-const icon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
 
 // Geocoding function using Nominatim (OpenStreetMap) - disabled during build
 const geocodeLocation = async (locationName) => {
