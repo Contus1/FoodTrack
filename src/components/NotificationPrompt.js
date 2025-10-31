@@ -2,6 +2,10 @@ import React from "react";
 import { useNotifications } from "../context/NotificationContext";
 
 const NotificationPrompt = () => {
+  // TEMPORARILY DISABLED - Notifications are turned off
+  return null;
+  
+  /* ORIGINAL CODE - COMMENTED OUT
   const { showPrompt, requestPermission, dismissPrompt } = useNotifications();
 
   if (!showPrompt) return null;
@@ -52,6 +56,7 @@ const NotificationPrompt = () => {
       </div>
     </div>
   );
+  */
 };
 
 export default NotificationPrompt;

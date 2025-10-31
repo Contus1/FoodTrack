@@ -22,26 +22,32 @@ export const NotificationProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showPrompt, setShowPrompt] = useState(false);
 
-  // Check notification permission on mount
-  useEffect(() => {
-    if ("Notification" in window) {
-      setPermission(Notification.permission);
-    }
-  }, []);
+  // TEMPORARILY DISABLED - Check notification permission on mount
+  // useEffect(() => {
+  //   if ("Notification" in window) {
+  //     setPermission(Notification.permission);
+  //   }
+  // }, []);
 
-  // Show prompt 3 seconds after user logs in (simple UX)
-  useEffect(() => {
-    if (user && permission === "default") {
-      const timer = setTimeout(() => {
-        setShowPrompt(true);
-      }, 3000); // Wait 3 seconds after login
+  // TEMPORARILY DISABLED - Show prompt 3 seconds after user logs in (simple UX)
+  // useEffect(() => {
+  //   if (user && permission === "default") {
+  //     const timer = setTimeout(() => {
+  //       setShowPrompt(true);
+  //     }, 3000); // Wait 3 seconds after login
 
-      return () => clearTimeout(timer);
-    }
-  }, [user, permission]);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [user, permission]);
 
-  // Request notification permission
+  // TEMPORARILY DISABLED - Request notification permission
   const requestPermission = async () => {
+    // Disabled for now
+    console.log("Notifications are temporarily disabled");
+    setShowPrompt(false);
+    return false;
+    
+    /* ORIGINAL CODE - COMMENTED OUT
     if (!("Notification" in window)) {
       alert("This browser does not support notifications");
       return false;
@@ -66,10 +72,16 @@ export const NotificationProvider = ({ children }) => {
       console.error("Error requesting notification permission:", error);
       return false;
     }
+    */
   };
 
-  // Subscribe to push notifications
+  // TEMPORARILY DISABLED - Subscribe to push notifications
   const subscribeToPush = async () => {
+    // Disabled for now
+    console.log("Push notifications are temporarily disabled");
+    return;
+    
+    /* ORIGINAL CODE - COMMENTED OUT
     if (!user) return;
 
     try {
@@ -108,6 +120,7 @@ export const NotificationProvider = ({ children }) => {
     } catch (error) {
       console.error("Error subscribing to push:", error);
     }
+    */
   };
 
   // Dismiss the permission prompt
@@ -175,40 +188,40 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
-  // Load notifications when user logs in
-  useEffect(() => {
-    if (user) {
-      loadNotifications();
+  // TEMPORARILY DISABLED - Load notifications when user logs in
+  // useEffect(() => {
+  //   if (user) {
+  //     loadNotifications();
 
-      // Set up real-time subscription for new notifications
-      const subscription = supabase
-        .channel("notifications")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "notifications",
-            filter: `user_id=eq.${user.id}`,
-          },
-          (payload) => {
-            console.log("New notification received:", payload.new);
-            setNotifications((prev) => [payload.new, ...prev]);
-            setUnreadCount((prev) => prev + 1);
+  //     // Set up real-time subscription for new notifications
+  //     const subscription = supabase
+  //       .channel("notifications")
+  //       .on(
+  //         "postgres_changes",
+  //         {
+  //           event: "INSERT",
+  //           schema: "public",
+  //           table: "notifications",
+  //           filter: `user_id=eq.${user.id}`,
+  //         },
+  //         (payload) => {
+  //           console.log("New notification received:", payload.new);
+  //           setNotifications((prev) => [payload.new, ...prev]);
+  //           setUnreadCount((prev) => prev + 1);
 
-            // Show in-app notification if browser doesn't support push
-            if (permission !== "granted" && "Notification" in window) {
-              // Could show a toast here
-            }
-          },
-        )
-        .subscribe();
+  //           // Show in-app notification if browser doesn't support push
+  //           if (permission !== "granted" && "Notification" in window) {
+  //             // Could show a toast here
+  //           }
+  //         },
+  //       )
+  //       .subscribe();
 
-      return () => {
-        subscription.unsubscribe();
-      };
-    }
-  }, [user, permission]);
+  //     return () => {
+  //       subscription.unsubscribe();
+  //     };
+  //   }
+  // }, [user, permission]);
 
   const value = {
     permission,

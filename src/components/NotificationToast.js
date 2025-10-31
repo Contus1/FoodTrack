@@ -2,6 +2,10 @@ import React from "react";
 import { useNotifications } from "../context/NotificationContext";
 
 const NotificationToast = () => {
+  // TEMPORARILY DISABLED - Notifications are turned off
+  return null;
+  
+  /* ORIGINAL CODE - COMMENTED OUT
   const { notifications, markAsRead } = useNotifications();
 
   // Get the most recent unread notification
@@ -65,6 +69,7 @@ const NotificationToast = () => {
       </div>
     </div>
   );
+  */
 };
 
 export default NotificationToast;

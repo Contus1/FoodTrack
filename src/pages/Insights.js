@@ -434,30 +434,19 @@ const Insights = () => {
                   </div>
                 )}
 
-                {/* Location Map - Only if locations exist */}
-                {analysis && Object.keys(analysis.flavorProfiles).length > 0 && (
+                {/* Location Map - Interactive Food Journey */}
+                {entries.filter(e => e.location).length > 0 && (
                   <div>
                     <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 px-1">
-                      Food Journey
+                      Food Journey Map
                     </h2>
                     <div className="bg-white border border-gray-200 rounded-2xl p-4">
-                      <div className="h-64">
-                        <SimpleMap
-                          locations={entries
-                            .filter((e) => e.location)
-                            .reduce((acc, entry) => {
-                              const existing = acc.find(
-                                (l) => l.name === entry.location,
-                              );
-                              if (existing) {
-                                existing.count++;
-                              } else {
-                                acc.push({ name: entry.location, count: 1 });
-                              }
-                              return acc;
-                            }, [])}
-                        />
+                      <div className="h-96">
+                        <SimpleMap entries={entries} />
                       </div>
+                      <p className="text-xs text-gray-500 mt-3 text-center">
+                        Click on markers to see details • {entries.filter(e => e.location).length} locations tracked
+                      </p>
                     </div>
                   </div>
                 )}
