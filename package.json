@@ -16,6 +16,7 @@
   "scripts": {
     "start": "GENERATE_SOURCEMAP=false react-scripts start",
     "build": "GENERATE_SOURCEMAP=false NODE_OPTIONS=--max-old-space-size=4096 react-scripts build",
+    "serve": "serve -s build -l 3000",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

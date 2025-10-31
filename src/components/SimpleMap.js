@@ -4,6 +4,22 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useNavigate } from "react-router-dom";
 
+// Component to auto-fit bounds when locations change
+const FitBounds = ({ locations }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (locations && locations.length > 0) {
+      const bounds = L.latLngBounds(
+        locations.map(loc => [loc.coordinates.lat, loc.coordinates.lng])
+      );
+      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 });
+    }
+  }, [locations, map]);
+  
+  return null;
+};
+
 // Simple marker icon fix without require()
 const icon = L.icon({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -45,21 +61,16 @@ const createCustomIcon = (rating) => {
   });
 };
 
-// Component to auto-fit bounds when locations change
-const FitBounds = ({ locations }) => {
-  const map = useMap();
-  
-  useEffect(() => {
-    if (locations && locations.length > 0) {
-      const bounds = L.latLngBounds(
-        locations.map(loc => [loc.coordinates.lat, loc.coordinates.lng])
-      );
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 });
-    }
-  }, [locations, map]);
-  
-  return null;
-};
+// eslint-disable-next-line no-unused-vars
+const icon = L.icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
 
 // Geocoding function using Nominatim (OpenStreetMap) - disabled during build
 const geocodeLocation = async (locationName) => {
