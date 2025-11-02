@@ -5,6 +5,7 @@ import { useEntries } from "../context/EntriesContext";
 import BottomNavigation from "../components/BottomNavigation";
 import StarRating from "../components/StarRating";
 import LocationAutocomplete from "../components/LocationAutocomplete";
+import DishAutocomplete from "../components/DishAutocomplete";
 import { compressImage, shouldCompress } from "../utils/imageOptimization";
 import { getOrCreateDish } from "../utils/dishManager";
 import supabase from "../utils/supabaseClient";
@@ -516,15 +517,12 @@ const AddEntry = () => {
             <label className="block text-sm font-medium text-gray-700">
               Dish Name
             </label>
-            <input
-              type="text"
-              required
+            <DishAutocomplete
               value={formData.title}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, title: e.target.value }))
+              onChange={(value) =>
+                setFormData((prev) => ({ ...prev, title: value }))
               }
               disabled={isViewing}
-              className="w-full text-lg font-medium text-black border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black interaction-smooth disabled:bg-gray-50 disabled:text-gray-700 shadow-sm"
               placeholder="What did you eat?"
             />
           </div>
