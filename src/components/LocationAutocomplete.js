@@ -177,26 +177,45 @@ const LocationAutocomplete = ({
 
           // Using OpenStreetMap Nominatim for reverse geocoding (free, no API key needed)
           const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
           );
           const data = await response.json();
 
-          // Format the location nicely
-          const city =
-            data.address.city || data.address.town || data.address.village;
-          const state = data.address.state;
-          const country = data.address.country;
+          // Build full address with street details
+          const address = data.address;
+          const parts = [];
 
-          let locationString = "";
-          if (city && state) {
-            locationString = `${city}, ${state}`;
-          } else if (city && country) {
-            locationString = `${city}, ${country}`;
-          } else if (state && country) {
-            locationString = `${state}, ${country}`;
-          } else {
-            locationString = country || "Current Location";
+          // Add house number and street (road)
+          if (address.house_number && address.road) {
+            parts.push(`${address.road} ${address.house_number}`);
+          } else if (address.road) {
+            parts.push(address.road);
           }
+
+          // Add neighborhood or suburb if available
+          if (address.neighbourhood || address.suburb) {
+            parts.push(address.neighbourhood || address.suburb);
+          }
+
+          // Add city/town
+          if (address.city || address.town || address.village) {
+            parts.push(address.city || address.town || address.village);
+          }
+
+          // Add state/region
+          if (address.state) {
+            parts.push(address.state);
+          }
+
+          // Add country for international context
+          if (address.country) {
+            parts.push(address.country);
+          }
+
+          // Join all parts with comma separation
+          const locationString = parts.length > 0 
+            ? parts.join(", ") 
+            : data.display_name || "Current Location";
 
           onChange(locationString);
           setIsGettingLocation(false);

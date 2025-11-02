@@ -22,7 +22,7 @@ const FitBounds = ({ locations }) => {
 
 // Custom marker icon with food emoji
 const createCustomIcon = (rating) => {
-  const color = rating >= 4 ? '#22c55e' : rating >= 3 ? '#eab308' : '#ef4444';
+  const color = rating >= 8 ? '#22c55e' : rating >= 5 ? '#eab308' : '#ef4444';
   return L.divIcon({
     className: 'custom-marker',
     html: `
@@ -283,12 +283,12 @@ const SimpleMap = ({ entries = [] }) => {
                 {entry.photo_url && (
                   <img
                     src={entry.photo_url}
-                    alt={entry.dish_name}
+                    alt={entry.title}
                     className="w-full h-32 object-cover rounded-lg mb-2"
                   />
                 )}
                 <h3 className="font-medium text-gray-900 text-sm mb-1">
-                  {entry.dish_name || 'Unnamed Dish'}
+                  {entry.title || 'Unnamed Dish'}
                 </h3>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs text-gray-600">📍 {entry.location}</span>
@@ -324,15 +324,15 @@ const SimpleMap = ({ entries = [] }) => {
       <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-md z-10 text-xs">
         <div className="flex items-center gap-2 mb-1">
           <span className="w-3 h-3 rounded-full bg-green-500"></span>
-          <span className="text-gray-700">Rating 4-5</span>
+          <span className="text-gray-700">Rating 8-10</span>
         </div>
         <div className="flex items-center gap-2 mb-1">
           <span className="w-3 h-3 rounded-full bg-yellow-500"></span>
-          <span className="text-gray-700">Rating 3-4</span>
+          <span className="text-gray-700">Rating 5-7</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded-full bg-red-500"></span>
-          <span className="text-gray-700">Rating &lt;3</span>
+          <span className="text-gray-700">Rating 1-4</span>
         </div>
       </div>
       
