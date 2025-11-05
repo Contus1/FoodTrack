@@ -63,18 +63,18 @@ const EntryCard = ({ entry, viewMode = "list" }) => {
           />
         )}
 
-        {/* Image */}
-        <div className="relative overflow-hidden bg-gray-50 aspect-[4/5] rounded-xl shadow-sm">
+        {/* Image - 4:5 aspect ratio (1080x1350px like Instagram portrait) */}
+        <div className="relative overflow-hidden bg-gray-50 rounded-2xl shadow-md" style={{ aspectRatio: '4/5' }}>
           {entry.photo_url ? (
             <OptimizedImage
               src={entry.photo_url}
               alt={entry.title}
-              className="w-full h-full transition-transform duration-700 group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
               <svg
-                className="w-12 h-12 text-gray-300"
+                className="w-16 h-16 text-gray-300"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -89,15 +89,31 @@ const EntryCard = ({ entry, viewMode = "list" }) => {
             </div>
           )}
 
+          {/* Rating Badge */}
+          <div className="absolute top-3 right-3 z-10">
+            <div className="glass-badge px-2.5 py-1.5 rounded-full">
+              <StarRating value={entry.rating} readonly size="sm" />
+            </div>
+          </div>
+
           {/* Overlay Info with Glass Effect */}
-          <div className="absolute inset-0 glass-image-overlay opacity-0 group-hover:opacity-100 interaction-smooth">
-            <div className="absolute bottom-4 left-4 right-4">
-              <h3 className="text-white font-light text-lg mb-1 truncate drop-shadow-sm">
+          <div className="absolute inset-0 glass-image-overlay opacity-0 group-hover:opacity-100 interaction-smooth flex items-end">
+            <div className="w-full p-5">
+              <h3 className="text-white font-medium text-base mb-1.5 line-clamp-2 drop-shadow-lg">
                 {entry.title}
               </h3>
               {entry.location && (
-                <p className="text-white/90 text-xs font-light truncate drop-shadow-sm">
-                  {entry.location}
+                <p className="text-white/95 text-sm font-light line-clamp-1 drop-shadow-md flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="truncate">{entry.location}</span>
+                </p>
+              )}
+              {entry.notes && (
+                <p className="text-white/90 text-xs font-light mt-2 line-clamp-2 drop-shadow-md italic">
+                  "{entry.notes}"
                 </p>
               )}
             </div>
@@ -176,18 +192,21 @@ const EntryCard = ({ entry, viewMode = "list" }) => {
         </div>
 
         {/* Bottom Info */}
-        <div className="pt-3">
-          <div className="flex items-start justify-between">
-            <h3 className="font-light text-black text-sm leading-tight">
+        <div className="pt-3 px-1">
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <h3 className="font-medium text-black text-sm leading-tight line-clamp-1 flex-1">
               {entry.title}
             </h3>
-            <span className="text-xs text-gray-400 ml-2 flex-shrink-0">
+            <span className="text-xs text-gray-400 flex-shrink-0 font-light">
               {formatDate(entry.created_at)}
             </span>
           </div>
           {entry.location && (
-            <p className="text-xs text-gray-500 mt-1 font-light">
-              {entry.location}
+            <p className="text-xs text-gray-500 font-light line-clamp-1 flex items-center gap-1">
+              <svg className="w-3 h-3 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              </svg>
+              <span className="truncate">{entry.location}</span>
             </p>
           )}
         </div>
