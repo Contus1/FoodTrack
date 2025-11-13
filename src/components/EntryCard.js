@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 
 const EntryCard = ({ entry, viewMode = "list" }) => {
   const [showMenu, setShowMenu] = useState(false);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const { deleteEntry } = useEntries();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -13,75 +14,35 @@ const EntryCard = ({ entry, viewMode = "list" }) => {
   // Check if this entry belongs to the current user
   const isOwnEntry = user && entry.user_id === user.id;
 
-  // Robust photo handling - handle arrays, single URLs, null, empty
-  const getPhotoUrl = () => {
-    if (!entry.photo_url) return null;
+  // Get all valid photo URLs as array
+  const getAllPhotos = () => {
+    if (!entry.photo_url) return [];
     
     let photoArray = entry.photo_url;
     
     // If photo_url is a JSON string, parse it first
     if (typeof entry.photo_url === 'string') {
       try {
-        // Check if it's a JSON array string like '["url1","url2"]'
         if (entry.photo_url.startsWith('[')) {
           photoArray = JSON.parse(entry.photo_url);
         } else {
-          // It's a plain URL string
-          return entry.photo_url.trim() !== '' ? entry.photo_url : null;
+          return entry.photo_url.trim() !== '' ? [entry.photo_url] : [];
         }
       } catch (e) {
-        // If parsing fails, treat as plain string
-        return entry.photo_url.trim() !== '' ? entry.photo_url : null;
+        return entry.photo_url.trim() !== '' ? [entry.photo_url] : [];
       }
     }
     
-    // If it's an array
+    // If it's an array, filter valid URLs
     if (Array.isArray(photoArray)) {
-      // Filter out null/empty values and return first valid one
-      const validPhotos = photoArray.filter(url => url && typeof url === 'string' && url.trim() !== '');
-      return validPhotos.length > 0 ? validPhotos[0] : null;
+      return photoArray.filter(url => url && typeof url === 'string' && url.trim() !== '');
     }
     
-    return null;
+    return [];
   };
 
-  const primaryPhoto = getPhotoUrl();
-  
-  const hasMultiplePhotos = () => {
-    let photoArray = entry.photo_url;
-    
-    // Parse JSON string if needed
-    if (typeof entry.photo_url === 'string' && entry.photo_url.startsWith('[')) {
-      try {
-        photoArray = JSON.parse(entry.photo_url);
-      } catch (e) {
-        return false;
-      }
-    }
-    
-    if (!Array.isArray(photoArray)) return false;
-    
-    const validPhotos = photoArray.filter(url => url && typeof url === 'string' && url.trim() !== '');
-    return validPhotos.length > 1;
-  };
-  
-  const getPhotoCount = () => {
-    let photoArray = entry.photo_url;
-    
-    // Parse JSON string if needed
-    if (typeof entry.photo_url === 'string' && entry.photo_url.startsWith('[')) {
-      try {
-        photoArray = JSON.parse(entry.photo_url);
-      } catch (e) {
-        return 1;
-      }
-    }
-    
-    if (!Array.isArray(photoArray)) return 1;
-    
-    const validPhotos = photoArray.filter(url => url && typeof url === 'string' && url.trim() !== '');
-    return validPhotos.length;
-  };
+  const photos = getAllPhotos();
+  const hasMultiplePhotos = photos.length > 1;
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -132,14 +93,46 @@ const EntryCard = ({ entry, viewMode = "list" }) => {
           />
         )}
 
-        {/* Image - 4:5 aspect ratio (1080x1350px like Instagram portrait) */}
+        {/* Image Carousel - 4:5 aspect ratio (1080x1350px like Instagram portrait) */}
         <div className="relative overflow-hidden bg-gray-50 rounded-2xl shadow-md" style={{ aspectRatio: '4/5' }}>
-          {primaryPhoto ? (
-            <OptimizedImage
-              src={primaryPhoto}
-              alt={entry.title}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            />
+          {photos.length > 0 ? (
+            <>
+              {/* Horizontal Scrollable Container */}
+              <div 
+                className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide w-full h-full"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                onScroll={(e) => {
+                  const index = Math.round(e.target.scrollLeft / e.target.offsetWidth);
+                  setCurrentPhotoIndex(index);
+                }}
+              >
+                {photos.map((photoUrl, index) => (
+                  <div key={index} className="flex-shrink-0 w-full h-full snap-center">
+                    <OptimizedImage
+                      src={photoUrl}
+                      alt={`${entry.title} - Photo ${index + 1}`}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  </div>
+                ))}
+              </div>
+              
+              {/* Photo Indicator Dots (Instagram style) */}
+              {hasMultiplePhotos && (
+                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 z-10 flex gap-1.5">
+                  {photos.map((_, index) => (
+                    <div
+                      key={index}
+                      className={`w-1.5 h-1.5 rounded-full transition-all ${
+                        index === currentPhotoIndex 
+                          ? 'bg-white w-2 h-2' 
+                          : 'bg-white/50'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
               <svg
@@ -167,20 +160,6 @@ const EntryCard = ({ entry, viewMode = "list" }) => {
               <span className="text-sm font-semibold text-gray-900">{entry.rating}</span>
             </div>
           </div>
-
-          {/* Multiple Photos Indicator */}
-          {hasMultiplePhotos() && (
-            <div className="absolute top-3 left-3 z-10">
-              <div className="glass-badge px-2 py-1 rounded-full flex items-center gap-1">
-                <svg className="w-3.5 h-3.5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span className="text-xs font-medium text-gray-700">
-                  {getPhotoCount()}
-                </span>
-              </div>
-            </div>
-          )}
 
           {/* Overlay Info with Glass Effect */}
           <div className="absolute inset-0 glass-image-overlay opacity-0 group-hover:opacity-100 interaction-smooth flex items-end">
@@ -308,14 +287,46 @@ const EntryCard = ({ entry, viewMode = "list" }) => {
         <div className="fixed inset-0 z-5" onClick={() => setShowMenu(false)} />
       )}
 
-      {/* Image */}
+      {/* Image Carousel */}
       <div className="relative overflow-hidden bg-gray-50 h-64">
-        {primaryPhoto ? (
-          <OptimizedImage
-            src={primaryPhoto}
-            alt={entry.title}
-            className="w-full h-full transition-transform duration-700 group-hover:scale-105"
-          />
+        {photos.length > 0 ? (
+          <>
+            {/* Horizontal Scrollable Container */}
+            <div 
+              className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide w-full h-full"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              onScroll={(e) => {
+                const index = Math.round(e.target.scrollLeft / e.target.offsetWidth);
+                setCurrentPhotoIndex(index);
+              }}
+            >
+              {photos.map((photoUrl, index) => (
+                <div key={index} className="flex-shrink-0 w-full h-full snap-center">
+                  <OptimizedImage
+                    src={photoUrl}
+                    alt={`${entry.title} - Photo ${index + 1}`}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                </div>
+              ))}
+            </div>
+            
+            {/* Photo Indicator Dots (Instagram style) */}
+            {hasMultiplePhotos && (
+              <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 z-10 flex gap-1.5">
+                {photos.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-1.5 h-1.5 rounded-full transition-all ${
+                      index === currentPhotoIndex 
+                        ? 'bg-white w-2 h-2' 
+                        : 'bg-white/50'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
             <svg
@@ -335,7 +346,7 @@ const EntryCard = ({ entry, viewMode = "list" }) => {
         )}
 
         {/* Rating Badge - Simple number display */}
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-4 right-4 z-10">
           <div className="glass-badge px-3 py-2 rounded-full flex items-center gap-1.5">
             <svg className="w-4 h-4 text-amber-500 fill-amber-500" viewBox="0 0 24 24">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
@@ -343,20 +354,6 @@ const EntryCard = ({ entry, viewMode = "list" }) => {
             <span className="text-sm font-semibold text-gray-900">{entry.rating}</span>
           </div>
         </div>
-
-        {/* Multiple Photos Indicator */}
-        {hasMultiplePhotos() && (
-          <div className="absolute bottom-4 right-4">
-            <div className="glass-badge px-2.5 py-1.5 rounded-full flex items-center gap-1.5">
-              <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span className="text-sm font-medium text-gray-700">
-                {getPhotoCount()}
-              </span>
-            </div>
-          </div>
-        )}
 
         {/* Menu Button - Only show for own entries */}
         {isOwnEntry && (
