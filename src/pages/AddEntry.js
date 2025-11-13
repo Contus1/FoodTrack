@@ -407,7 +407,7 @@ const AddEntry = () => {
     console.log("HandleSubmit called:", { isEditing, editId, formData });
     setLoading(true);
     try {
-      let photoUrls = [...formData.photo_url];
+      let photoUrls = Array.isArray(formData.photo_url) ? [...formData.photo_url] : [];
 
       // Upload any new images
       const filesToUpload = selectedFiles.filter(f => f !== null && f !== undefined);
@@ -422,7 +422,15 @@ const AddEntry = () => {
             return uploadedUrls[uploadIndex] || url;
           }
           return url;
-        }).filter(url => url !== null);
+        }).filter(url => url !== null && url !== undefined && url !== '');
+      }
+
+      // Filter out any null/undefined/empty values and ensure it's always an array
+      photoUrls = photoUrls.filter(url => url && url !== '');
+      
+      // If no photos, set to empty array (not null)
+      if (photoUrls.length === 0) {
+        photoUrls = [];
       }
 
       // Get or create dish based on title
