@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import OptimizedImage from "./OptimizedImage";
 import { useEntries } from "../context/EntriesContext";
 import { useAuth } from "../context/AuthContext";
 
 const EntryCard = ({ entry, viewMode = "list" }) => {
   const [showMenu, setShowMenu] = useState(false);
-  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const { deleteEntry } = useEntries();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -14,28 +12,18 @@ const EntryCard = ({ entry, viewMode = "list" }) => {
   // Check if this entry belongs to the current user
   const isOwnEntry = user && entry.user_id === user.id;
 
-  // Get all valid photo URLs as array
+  // Get all valid photo URLs as array - SIMPLE VERSION
   const getAllPhotos = () => {
     if (!entry.photo_url) return [];
     
-    let photoArray = entry.photo_url;
-    
-    // If photo_url is a JSON string, parse it first
-    if (typeof entry.photo_url === 'string') {
-      try {
-        if (entry.photo_url.startsWith('[')) {
-          photoArray = JSON.parse(entry.photo_url);
-        } else {
-          return entry.photo_url.trim() !== '' ? [entry.photo_url] : [];
-        }
-      } catch (e) {
-        return entry.photo_url.trim() !== '' ? [entry.photo_url] : [];
-      }
+    // Supabase returns arrays directly, no JSON parsing needed
+    if (Array.isArray(entry.photo_url)) {
+      return entry.photo_url.filter(url => url && typeof url === 'string' && url.trim() !== '');
     }
     
-    // If it's an array, filter valid URLs
-    if (Array.isArray(photoArray)) {
-      return photoArray.filter(url => url && typeof url === 'string' && url.trim() !== '');
+    // Single string URL
+    if (typeof entry.photo_url === 'string' && entry.photo_url.trim() !== '') {
+      return [entry.photo_url];
     }
     
     return [];
@@ -101,17 +89,14 @@ const EntryCard = ({ entry, viewMode = "list" }) => {
               <div 
                 className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide w-full h-full"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                onScroll={(e) => {
-                  const index = Math.round(e.target.scrollLeft / e.target.offsetWidth);
-                  setCurrentPhotoIndex(index);
-                }}
               >
                 {photos.map((photoUrl, index) => (
                   <div key={index} className="flex-shrink-0 w-full h-full snap-center">
-                    <OptimizedImage
+                    <img
                       src={photoUrl}
                       alt={`${entry.title} - Photo ${index + 1}`}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      className="w-full h-full object-cover"
+                      loading="eager"
                     />
                   </div>
                 ))}
@@ -122,12 +107,8 @@ const EntryCard = ({ entry, viewMode = "list" }) => {
                 <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 z-10 flex gap-1.5">
                   {photos.map((_, index) => (
                     <div
-                      key={index}
-                      className={`w-1.5 h-1.5 rounded-full transition-all ${
-                        index === currentPhotoIndex 
-                          ? 'bg-white w-2 h-2' 
-                          : 'bg-white/50'
-                      }`}
+                      key={`dot-${index}`}
+                      className="w-1.5 h-1.5 rounded-full bg-white/60"
                     />
                   ))}
                 </div>
@@ -295,17 +276,14 @@ const EntryCard = ({ entry, viewMode = "list" }) => {
             <div 
               className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide w-full h-full"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-              onScroll={(e) => {
-                const index = Math.round(e.target.scrollLeft / e.target.offsetWidth);
-                setCurrentPhotoIndex(index);
-              }}
             >
               {photos.map((photoUrl, index) => (
                 <div key={index} className="flex-shrink-0 w-full h-full snap-center">
-                  <OptimizedImage
+                  <img
                     src={photoUrl}
                     alt={`${entry.title} - Photo ${index + 1}`}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="w-full h-full object-cover"
+                    loading="eager"
                   />
                 </div>
               ))}
@@ -316,12 +294,8 @@ const EntryCard = ({ entry, viewMode = "list" }) => {
               <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 z-10 flex gap-1.5">
                 {photos.map((_, index) => (
                   <div
-                    key={index}
-                    className={`w-1.5 h-1.5 rounded-full transition-all ${
-                      index === currentPhotoIndex 
-                        ? 'bg-white w-2 h-2' 
-                        : 'bg-white/50'
-                    }`}
+                    key={`dot-list-${index}`}
+                    className="w-1.5 h-1.5 rounded-full bg-white/60"
                   />
                 ))}
               </div>
