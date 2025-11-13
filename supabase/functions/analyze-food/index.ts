@@ -1,11 +1,11 @@
 // Supabase Edge Function to analyze food images using Google Gemini API
-// Using gemini-1.5-flash (stable, higher rate limits, supports multimodal)
+// Using gemini-1.5-flash-latest (stable, multimodal, v1beta API)
 
 // @deno-types="https://deno.land/std@0.168.0/http/server.ts"
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
 
 // Your tag categories from AddEntry.js
 const TAG_CATEGORIES = {
@@ -45,10 +45,11 @@ const TAG_CATEGORIES = {
 };
 
 serve(async (req: Request) => {
-  // CORS headers
+  // CORS headers - Allow all headers for DigitalOcean compatibility
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Headers": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
 
   // Handle CORS preflight
@@ -60,6 +61,8 @@ serve(async (req: Request) => {
     // Get image data from request
     const { imageBase64 } = await req.json();
 
+    console.log('Received request, imageBase64 length:', imageBase64?.length || 0);
+
     if (!imageBase64) {
       return new Response(
         JSON.stringify({ error: "No image provided" }),
@@ -68,11 +71,14 @@ serve(async (req: Request) => {
     }
 
     if (!GEMINI_API_KEY) {
+      console.error('GEMINI_API_KEY not configured');
       return new Response(
         JSON.stringify({ error: "GEMINI_API_KEY not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    console.log('Calling Gemini API...');
 
     // Prepare prompt for Gemini
     const prompt = `Analyze this food image and provide a detailed response in JSON format.
@@ -127,17 +133,21 @@ Rules:
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Gemini API error:", errorText);
+      console.error("Gemini API error - Status:", response.status);
+      console.error("Gemini API error - Body:", errorText);
       return new Response(
         JSON.stringify({ 
           error: "Failed to analyze image",
+          status: response.status,
           details: errorText 
         }),
         { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    console.log('Gemini API response received successfully');
     const data = await response.json();
+    console.log('Gemini data parsed:', JSON.stringify(data).substring(0, 200));
     
     // Extract the generated text
     const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
