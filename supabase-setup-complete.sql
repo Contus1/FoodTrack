@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS public.entries (
   title TEXT NOT NULL,
   rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 10),
   notes TEXT,
-  photo_url TEXT,
+  photo_url TEXT[],
   location TEXT,
   tags TEXT[],
   is_private BOOLEAN DEFAULT FALSE,

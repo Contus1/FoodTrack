@@ -14,7 +14,6 @@ import AuthPage from "./pages/AuthPage";
 import SetupPage from "./components/SetupPage";
 import NotificationPrompt from "./components/NotificationPrompt";
 import NotificationToast from "./components/NotificationToast";
-import ChangelogModal from "./components/ChangelogModal";
 
 // Check if Supabase is configured
 const isSupabaseConfigured = () => {
@@ -62,7 +61,6 @@ const AppContent = () => {
                 <Route path="/profile/:userId" element={<UserProfile />} />
                 <Route path="/login" element={<AuthPage />} />
               </Routes>
-              <ChangelogModal />
               <NotificationPrompt />
               <NotificationToast />
             </div>

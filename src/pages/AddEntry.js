@@ -10,11 +10,12 @@ import { compressImage, shouldCompress } from "../utils/imageOptimization";
 import { getOrCreateDish } from "../utils/dishManager";
 import supabase from "../utils/supabaseClient";
 import { useSocial } from "../context/SocialContext";
+import { analyzeFoodImage } from "../utils/aiAnalysis";
 
 const AddEntry = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { addEntry, updateEntry, uploadImage, entries, deleteEntry } =
+  const { addEntry, updateEntry, uploadImage, uploadImages, entries, deleteEntry } =
     useEntries();
   const { friends } = useSocial();
   const [searchParams] = useSearchParams();
@@ -30,13 +31,14 @@ const AddEntry = () => {
     tags: [],
     notes: "",
     location: "",
-    photo_url: "",
-    is_private: false, // Default to public posts
-    tagged_friends: [], // Array of friend user IDs
+    photo_url: [], // Changed to array
+    is_private: false,
+    tagged_friends: [],
   });
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]); // Changed to array
   const [loading, setLoading] = useState(false);
   const [compressing, setCompressing] = useState(false);
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
   const [customTagInput, setCustomTagInput] = useState("");
   const [showAllTags, setShowAllTags] = useState(false);
 
@@ -81,7 +83,7 @@ const AddEntry = () => {
               tags: data.tags || [],
               notes: data.notes || "",
               location: data.location || "",
-              photo_url: data.photo_url || "",
+              photo_url: Array.isArray(data.photo_url) ? data.photo_url : (data.photo_url ? [data.photo_url] : []),
               is_private: data.is_private || false,
               tagged_friends: data.tagged_friends || [],
             });
@@ -105,7 +107,7 @@ const AddEntry = () => {
             tags: entryToLoad.tags || [],
             notes: entryToLoad.notes || "",
             location: entryToLoad.location || "",
-            photo_url: entryToLoad.photo_url || "",
+            photo_url: Array.isArray(entryToLoad.photo_url) ? entryToLoad.photo_url : (entryToLoad.photo_url ? [entryToLoad.photo_url] : []),
             is_private: entryToLoad.is_private || false,
             tagged_friends: entryToLoad.tagged_friends || [],
           });
@@ -241,7 +243,7 @@ const AddEntry = () => {
   // Get all tags as flat array for suggestions
   const allAvailableTags = Object.values(tagCategories).flat();
 
-  const handleImageUpload = async (e) => {
+  const handleImageUpload = async (e, slotIndex) => {
     const file = e.target.files[0];
     if (file) {
       setCompressing(true);
@@ -255,19 +257,85 @@ const AddEntry = () => {
             })
           : file;
 
-        setSelectedFile(fileToUse);
         // Create preview URL
         const previewUrl = URL.createObjectURL(fileToUse);
-        setFormData((prev) => ({ ...prev, photo_url: previewUrl }));
+        
+        // Update the selectedFiles array at the specific slot
+        setSelectedFiles((prev) => {
+          const newFiles = [...prev];
+          newFiles[slotIndex] = fileToUse;
+          return newFiles;
+        });
+        
+        // Update the photo_url array with preview
+        setFormData((prev) => {
+          const newPhotos = [...prev.photo_url];
+          newPhotos[slotIndex] = previewUrl;
+          return { ...prev, photo_url: newPhotos };
+        });
       } catch (error) {
         console.error("Error compressing image:", error);
         // Fall back to original file
-        setSelectedFile(file);
         const previewUrl = URL.createObjectURL(file);
-        setFormData((prev) => ({ ...prev, photo_url: previewUrl }));
+        setSelectedFiles((prev) => {
+          const newFiles = [...prev];
+          newFiles[slotIndex] = file;
+          return newFiles;
+        });
+        setFormData((prev) => {
+          const newPhotos = [...prev.photo_url];
+          newPhotos[slotIndex] = previewUrl;
+          return { ...prev, photo_url: newPhotos };
+        });
       } finally {
         setCompressing(false);
       }
+    }
+  };
+
+  const removePhoto = (slotIndex) => {
+    setSelectedFiles((prev) => {
+      const newFiles = [...prev];
+      newFiles[slotIndex] = null;
+      return newFiles;
+    });
+    setFormData((prev) => {
+      const newPhotos = [...prev.photo_url];
+      newPhotos[slotIndex] = null;
+      return { ...prev, photo_url: newPhotos.filter(p => p !== null) };
+    });
+  };
+
+  const handleAIAnalysis = async () => {
+    // Check if there's at least one photo
+    const firstPhoto = selectedFiles.find(f => f !== null && f !== undefined);
+    
+    if (!firstPhoto) {
+      alert("Please upload at least one photo first!");
+      return;
+    }
+
+    setAiAnalyzing(true);
+    
+    try {
+      // Analyze the first photo with AI
+      const result = await analyzeFoodImage(firstPhoto, supabase);
+      
+      // Update form data with AI results
+      setFormData((prev) => ({
+        ...prev,
+        title: result.dish_name,
+        tags: result.tags
+      }));
+      
+      // Show success message
+      console.log("AI Analysis successful:", result);
+      
+    } catch (error) {
+      console.error("AI Analysis failed:", error);
+      alert(`AI Analysis failed: ${error.message}\n\nPlease make sure:\n- Your image shows food clearly\n- The Gemini API key is configured in Supabase`);
+    } finally {
+      setAiAnalyzing(false);
     }
   };
 
@@ -339,11 +407,22 @@ const AddEntry = () => {
     console.log("HandleSubmit called:", { isEditing, editId, formData });
     setLoading(true);
     try {
-      let photoUrl = formData.photo_url;
+      let photoUrls = [...formData.photo_url];
 
-      // Only upload new image if file was selected
-      if (selectedFile) {
-        photoUrl = await uploadImage(selectedFile);
+      // Upload any new images
+      const filesToUpload = selectedFiles.filter(f => f !== null && f !== undefined);
+      if (filesToUpload.length > 0) {
+        const uploadedUrls = await uploadImages(filesToUpload);
+        
+        // Replace preview URLs with actual URLs
+        photoUrls = formData.photo_url.map((url, index) => {
+          if (selectedFiles[index]) {
+            // Find the corresponding uploaded URL
+            const uploadIndex = selectedFiles.slice(0, index).filter(f => f !== null).length;
+            return uploadedUrls[uploadIndex] || url;
+          }
+          return url;
+        }).filter(url => url !== null);
       }
 
       // Get or create dish based on title
@@ -361,7 +440,7 @@ const AddEntry = () => {
 
       const entryData = {
         ...formData,
-        photo_url: photoUrl,
+        photo_url: photoUrls,
         dish_id: dishId,
       };
 
@@ -440,77 +519,129 @@ const AddEntry = () => {
 
       <main className="max-w-3xl mx-auto px-6 py-8">
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Photo Upload */}
+          {/* Photo Upload - 3 Slots */}
           <div className="space-y-4">
             <label className="block text-sm font-light text-gray-600 uppercase tracking-wider">
-              Visual Documentation
+              Photos (up to 3)
             </label>
-            <div className="relative group">
-              {formData.photo_url ? (
-                <div className="relative">
-                  <img
-                    src={formData.photo_url}
-                    alt="Preview"
-                    className="w-full h-48 object-cover rounded-2xl shadow-md"
-                  />
-                  {!isViewing && (
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 interaction-smooth flex items-center justify-center rounded-2xl backdrop-blur-0 group-hover:backdrop-blur-sm">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        id="photo-upload"
-                      />
-                      <span className="opacity-0 group-hover:opacity-100 text-white font-medium text-sm transition-all duration-200 drop-shadow-md">
-                        Change Photo
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="h-48 border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center group cursor-pointer hover:border-gray-400 interaction-smooth relative glass-panel-light">
-                  {!isViewing && (
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      id="photo-upload-empty"
-                      disabled={compressing}
-                    />
-                  )}
-                  {compressing ? (
-                    <div className="text-center">
-                      <div className="w-10 h-10 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-                      <p className="text-gray-500 text-sm">
-                        Compressing image...
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <svg
-                        className="w-10 h-10 text-gray-400 mx-auto mb-3 group-hover:text-gray-600 transition-colors"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1}
-                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+            <div className="grid grid-cols-3 gap-3">
+              {[0, 1, 2].map((slotIndex) => {
+                const photoUrl = formData.photo_url[slotIndex];
+                return (
+                  <div key={slotIndex} className="relative group aspect-square">
+                    {photoUrl ? (
+                      <div className="relative w-full h-full">
+                        <img
+                          src={photoUrl}
+                          alt={`Photo ${slotIndex + 1}`}
+                          className="w-full h-full object-cover rounded-xl shadow-md"
                         />
-                      </svg>
-                      <p className="text-gray-500 group-hover:text-gray-700 transition-colors">
-                        {isViewing ? "No photo" : "Click to add photo"}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
+                        {!isViewing && (
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 interaction-smooth flex items-center justify-center rounded-xl backdrop-blur-0 group-hover:backdrop-blur-sm">
+                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => handleImageUpload(e, slotIndex)}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                disabled={compressing}
+                              />
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removePhoto(slotIndex);
+                                }}
+                                className="relative z-10 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="w-full h-full border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center cursor-pointer hover:border-gray-400 interaction-smooth relative glass-panel-light">
+                        {!isViewing && (
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageUpload(e, slotIndex)}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            disabled={compressing}
+                          />
+                        )}
+                        {compressing ? (
+                          <div className="w-6 h-6 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                          <div className="text-center p-2">
+                            <svg
+                              className="w-8 h-8 text-gray-400 mx-auto mb-1"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={1}
+                                d="M12 4v16m8-8H4"
+                              />
+                            </svg>
+                            <p className="text-xs text-gray-500">Add</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
+
+          {/* AI Analysis Button */}
+          {!isViewing && formData.photo_url.length > 0 && (
+            <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-4 border border-purple-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900">AI Magic ✨</h3>
+                    <p className="text-xs text-gray-600">Let AI fill in dish name & tags</p>
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleAIAnalysis}
+                disabled={aiAnalyzing}
+                className="w-full py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed interaction-smooth flex items-center justify-center space-x-2"
+              >
+                {aiAnalyzing ? (
+                  <>
+                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Analyzing...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span>Analyze with AI</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
 
           {/* Title */}
           <div className="space-y-3">

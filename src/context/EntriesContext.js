@@ -119,6 +119,35 @@ export const EntriesProvider = ({ children }) => {
     }
   };
 
+  const uploadImages = async (files) => {
+    if (!files || files.length === 0) return [];
+
+    try {
+      const uploadPromises = files.map(async (file) => {
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+        const { error } = await supabase.storage
+          .from("food-images")
+          .upload(fileName, file);
+
+        if (error) throw error;
+
+        const { data: urlData } = supabase.storage
+          .from("food-images")
+          .getPublicUrl(fileName);
+
+        return urlData.publicUrl;
+      });
+
+      const urls = await Promise.all(uploadPromises);
+      return urls.filter(url => url !== null);
+    } catch (error) {
+      console.error("Error uploading images:", error);
+      return [];
+    }
+  };
+
   const deleteEntry = async (entryId) => {
     if (!user) return { error: "User not authenticated" };
 
@@ -190,6 +219,7 @@ export const EntriesProvider = ({ children }) => {
     fetchEntries,
     addEntry,
     uploadImage,
+    uploadImages,
     deleteEntry,
     updateEntry,
   };

@@ -37,7 +37,7 @@ const StarRating = ({
         </div>
 
         {/* Interactive Scale */}
-        <div className="relative h-14 bg-white rounded-full border border-gray-200 overflow-hidden">
+        <div className="relative h-12 sm:h-14 bg-white rounded-full border border-gray-200 overflow-hidden">
           {/* Background gradient */}
           <div className="absolute inset-0 bg-gradient-to-r from-red-50 via-yellow-50 via-amber-50 to-emerald-50" />
 
@@ -48,7 +48,7 @@ const StarRating = ({
           />
 
           {/* Rating buttons */}
-          <div className="relative h-full flex items-center justify-between px-2">
+          <div className="relative h-full flex items-center justify-between px-1 sm:px-2 gap-0.5 sm:gap-1">
             {ratings.map((rating) => (
               <button
                 key={rating}
@@ -56,8 +56,8 @@ const StarRating = ({
                 onClick={() => handleStarClick(rating)}
                 disabled={readonly}
                 className={`
-                  relative z-10 w-9 h-9 rounded-full transition-all duration-200
-                  flex items-center justify-center font-medium text-sm
+                  relative z-10 w-7 h-7 sm:w-9 sm:h-9 rounded-full transition-all duration-200
+                  flex items-center justify-center font-medium text-xs sm:text-sm flex-shrink-0
                   ${readonly ? "cursor-default" : "cursor-pointer touch-manipulation active:scale-90"}
                   ${
                     rating === value

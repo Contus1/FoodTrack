@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS public.entries (
   rating INTEGER CHECK (rating >= 1 AND rating <= 10),
   tags TEXT[] DEFAULT '{}',
   notes TEXT,
-  photo_url TEXT,
+  photo_url TEXT[],
   location TEXT,
   is_private BOOLEAN DEFAULT FALSE,
   tagged_friends UUID[] DEFAULT '{}',

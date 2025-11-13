@@ -2,9 +2,19 @@
 
 A sophisticated social media platform for food enthusiasts to document, share, and discover culinary experiences with friends. Built with React, Tailwind CSS, and Supabase.
 
-**✨ Now featuring the Liquid Glass design system** - A refined iOS 26-inspired aesthetic with subtle translucency, depth, and luminous surfaces. See [LIQUID_GLASS_DESIGN.md](LIQUID_GLASS_DESIGN.md) for details.
+**✨ Now featuring the Liquid Glass design system** - A refined iOS 26-inspired aesthetic with subtle translucency, depth, and luminous surfaces. 
+**🤖 NEW: AI-Powered Food Recognition** - Automatic dish name and tag detection using Google Gemini AI (completely free!). Just upload a photo and let AI do the work!
 
 ## ✨ Revolutionary Features
+
+### 🤖 AI-Powered Food Recognition ⚡ NEW!
+
+- **Automatic Dish Detection**: Upload a photo and AI identifies the dish name
+- **Smart Tag Generation**: AI suggests 5-8 relevant tags from your categories
+- **Instant Analysis**: Results in 2-3 seconds
+- **Free Forever**: Google Gemini Free Tier (1,500 images/day)
+- **One-Click Magic**: Just click "✨ AI Magic" button after photo upload
+- **Accurate Recognition**: Powered by Google's advanced Gemini 2.0 Flash model
 
 ### 🌟 Social Media Integration
 
@@ -39,11 +49,14 @@ A sophisticated social media platform for food enthusiasts to document, share, a
 
 ### 📱 Core Food Tracking
 
-- **Photo Upload**: Capture and share your culinary moments
-- **Smart Rating**: 5-star rating system with visual feedback
-- **Location Tracking**: Geolocation integration for restaurant discovery
-- **Tag System**: Categorize dishes with custom tags
+- **Multi-Photo Upload**: Up to 3 photos per entry for different angles
+- **AI-Powered Analysis**: 🤖 One-click automatic dish name & tag detection using Google Gemini
+- **Smart Image Processing**: Automatic compression and optimization for fast uploads
+- **10-Point Rating System**: Intuitive visual feedback with descriptions
+- **Location Tracking**: Integrated geolocation for restaurant discovery
+- **Comprehensive Tags**: 80+ pre-defined tags across 8 categories + custom tags
 - **Advanced Search**: Filter by cuisine, location, rating, and tags
+- **Private Entries**: Option to keep meals private or share with friends
 
 ### 🔔 PWA & Notifications
 
@@ -66,6 +79,32 @@ A sophisticated social media platform for food enthusiasts to document, share, a
 - Based on your ratings, preferences, and friend activity
 - Seasonal and trending dish recommendations
 - Location-based suggestions for new restaurants
+
+## 🤖 AI Features
+
+### How It Works
+
+1. **Upload Photo** - Add 1-3 photos of your meal
+2. **Click AI Magic** - Press the "✨ AI Magic" button
+3. **Auto-Fill** - Dish name and tags are automatically detected
+4. **Refine** - Adjust if needed and save your entry
+
+### Technology
+
+- **Model**: Google Gemini 2.0 Flash (latest)
+- **Processing**: Supabase Edge Functions
+- **Speed**: 2-3 seconds per image
+- **Accuracy**: High precision for common dishes
+- **Free Tier**: 1,500 analyses per day
+
+### Setup AI Features
+
+For detailed AI setup instructions, see [AI-QUICKSTART.md](AI-QUICKSTART.md)
+
+**Quick Setup:**
+1. Get free API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+2. Set in Supabase: `supabase secrets set GEMINI_API_KEY=your-key`
+3. Deploy function: `supabase functions deploy analyze-food`
 
 ## 🚀 Getting Started
 
@@ -108,13 +147,19 @@ A sophisticated social media platform for food enthusiasts to document, share, a
    - Creates storage buckets for food images and profile pictures
    - Sets up Row Level Security (RLS) policies for data protection
 
-5. **Start the development server**
+5. **AI Setup (Optional but Recommended)** 🤖
+   - Follow the detailed guide: [AI-SETUP.md](AI-SETUP.md)
+   - Get a free Gemini API key from Google AI Studio
+   - Deploy the analyze-food Edge Function
+   - Enable automatic dish name & tag detection!
+
+6. **Start the development server**
 
    ```bash
    npm start
    ```
 
-6. **Visit the app**
+7. **Visit the app**
    Open [http://localhost:3000](http://localhost:3000) in your browser
 
 ## 🗄️ Database Schema
@@ -154,27 +199,32 @@ A sophisticated social media platform for food enthusiasts to document, share, a
 - **Supabase**: PostgreSQL database with real-time features
 - **Authentication**: Email/password with social login options
 - **Storage**: Image upload and optimization
-- **Edge Functions**: Server-side logic for complex operations
+- **Edge Functions**: Serverless functions for AI analysis and complex operations
+- **Google Gemini AI**: Advanced image recognition for food analysis (Free Tier)
 
 ### Unique Integrations
 
+- **AI Image Recognition**: Google Gemini 2.0 Flash for automatic food detection
 - **Geolocation API**: Location-based features
-- **File Upload**: Optimized image handling
+- **File Upload**: Optimized image handling with automatic compression
 - **Real-time Updates**: Live social interactions
 - **Progressive Web App**: Mobile-friendly with offline capabilities
 
 ## 🌟 Unique Value Propositions
 
-1. **First-of-its-kind Food DNA Matching**: Revolutionary compatibility algorithm for food lovers
-2. **Interactive Flavor Constellation**: Unprecedented visualization of culinary preferences
-3. **Gamified Achievement System**: Makes food tracking addictive and rewarding
-4. **Social-First Design**: Built from ground up as a social platform, not just a tracker
-5. **AI-Powered Insights**: Advanced analytics that learn from your preferences
+1. **AI-Powered Food Recognition**: Revolutionary one-click dish detection and tagging 🤖
+2. **First-of-its-kind Food DNA Matching**: Revolutionary compatibility algorithm for food lovers
+3. **Interactive Flavor Constellation**: Unprecedented visualization of culinary preferences
+4. **Gamified Achievement System**: Makes food tracking addictive and rewarding
+5. **Social-First Design**: Built from ground up as a social platform, not just a tracker
+6. **Advanced Analytics**: AI insights that learn from your preferences
 
 ## 🔮 Roadmap
 
 ### Recently Added ✅
 
+- [x] **AI Food Recognition** - Automatic dish name & tag detection 🤖
+- [x] **Multi-Photo Upload** - Up to 3 photos per entry
 - [x] Liquid Glass Design System (iOS 26-inspired UI)
 - [x] PWA Support with Service Workers
 - [x] Push Notifications System
@@ -184,14 +234,16 @@ A sophisticated social media platform for food enthusiasts to document, share, a
 
 ### Upcoming Features
 
+- [ ] Voice Input for Dish Names
+- [ ] AI Cuisine Style Analysis (Japanese, Italian, etc.)
+- [ ] Batch Photo Analysis (multiple dishes at once)
 - [ ] AR Menu Recognition
 - [ ] Recipe Sharing and Collaboration
 - [ ] Food Challenges and Competitions
 - [ ] Restaurant Partnership Program
-- [ ] Advanced ML Recommendations
 - [ ] Video Story Integration
 - [ ] Group Dining Events
-- [ ] Nutritional Analysis
+- [ ] Nutritional Analysis with AI
 - [ ] Integration with Food Delivery Apps
 
 ## 🤝 Contributing
