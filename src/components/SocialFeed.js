@@ -120,16 +120,56 @@ const SocialFeedCard = ({ entry, onLike, onSave, onComment }) => {
         </div>
       </div>
 
-      {/* Image */}
-      {entry.photo_url && (Array.isArray(entry.photo_url) ? entry.photo_url[0] : entry.photo_url) && (
-        <div className="relative">
-          <img
-            src={Array.isArray(entry.photo_url) ? entry.photo_url[0] : entry.photo_url}
-            alt={entry.title}
-            className="w-full h-64 object-cover"
-          />
-        </div>
-      )}
+      {/* Image Carousel */}
+      {(() => {
+        const photos = (() => {
+          if (!entry.photo_url) return [];
+          if (Array.isArray(entry.photo_url)) {
+            return entry.photo_url.filter(url => url && typeof url === 'string' && url.trim() !== '');
+          }
+          if (typeof entry.photo_url === 'string' && entry.photo_url.trim() !== '') {
+            return [entry.photo_url];
+          }
+          return [];
+        })();
+        
+        const hasMultiplePhotos = photos.length > 1;
+        
+        if (photos.length === 0) return null;
+        
+        return (
+          <div className="relative">
+            {/* Horizontal Scrollable Container */}
+            <div 
+              className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide w-full h-64"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {photos.map((photoUrl, index) => (
+                <div key={index} className="flex-shrink-0 w-full h-full snap-center">
+                  <img
+                    src={photoUrl}
+                    alt={`${entry.title} - Photo ${index + 1}`}
+                    className="w-full h-full object-cover"
+                    loading="eager"
+                  />
+                </div>
+              ))}
+            </div>
+            
+            {/* Photo Indicator Dots (Instagram style) */}
+            {hasMultiplePhotos && (
+              <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 z-10 flex gap-1.5">
+                {photos.map((_, index) => (
+                  <div
+                    key={`dot-${index}`}
+                    className="w-1.5 h-1.5 rounded-full bg-white/60"
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Content */}
       <div className="p-4 bg-white/60">
