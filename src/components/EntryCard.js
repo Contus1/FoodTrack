@@ -13,12 +13,29 @@ const EntryCard = ({ entry, viewMode = "list" }) => {
   // Check if this entry belongs to the current user
   const isOwnEntry = user && entry.user_id === user.id;
 
-  // Get the first photo from the array, or fallback to single photo_url for backward compatibility
-  const primaryPhoto = Array.isArray(entry.photo_url) 
-    ? entry.photo_url[0] 
-    : entry.photo_url;
+  // Robust photo handling - handle arrays, single URLs, null, empty
+  const getPhotoUrl = () => {
+    if (!entry.photo_url) return null;
+    
+    // If it's an array
+    if (Array.isArray(entry.photo_url)) {
+      // Filter out null/empty values and return first valid one
+      const validPhotos = entry.photo_url.filter(url => url && url.trim() !== '');
+      return validPhotos.length > 0 ? validPhotos[0] : null;
+    }
+    
+    // If it's a string
+    if (typeof entry.photo_url === 'string' && entry.photo_url.trim() !== '') {
+      return entry.photo_url;
+    }
+    
+    return null;
+  };
+
+  const primaryPhoto = getPhotoUrl();
   
-  const hasMultiplePhotos = Array.isArray(entry.photo_url) && entry.photo_url.length > 1;
+  const hasMultiplePhotos = Array.isArray(entry.photo_url) && 
+    entry.photo_url.filter(url => url && url.trim() !== '').length > 1;
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -112,7 +129,9 @@ const EntryCard = ({ entry, viewMode = "list" }) => {
                 <svg className="w-3.5 h-3.5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <span className="text-xs font-medium text-gray-700">{entry.photo_url.length}</span>
+                <span className="text-xs font-medium text-gray-700">
+                  {Array.isArray(entry.photo_url) ? entry.photo_url.filter(url => url && url.trim() !== '').length : 1}
+                </span>
               </div>
             </div>
           )}
@@ -286,7 +305,9 @@ const EntryCard = ({ entry, viewMode = "list" }) => {
               <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <span className="text-sm font-medium text-gray-700">{entry.photo_url.length}</span>
+              <span className="text-sm font-medium text-gray-700">
+                {Array.isArray(entry.photo_url) ? entry.photo_url.filter(url => url && url.trim() !== '').length : 1}
+              </span>
             </div>
           </div>
         )}

@@ -1,6 +1,7 @@
 // Supabase Edge Function to analyze food images using Google Gemini API
-// Free Tier: gemini-2.0-flash-exp model
+// Using gemini-1.5-flash (stable, higher rate limits, supports multimodal)
 
+// @deno-types="https://deno.land/std@0.168.0/http/server.ts"
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
@@ -43,7 +44,7 @@ const TAG_CATEGORIES = {
   ]
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   // CORS headers
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -189,12 +190,13 @@ Rules:
       }
     );
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error in analyze-food function:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       JSON.stringify({ 
         error: "Internal server error",
-        message: error.message 
+        message: errorMessage
       }),
       { 
         status: 500, 

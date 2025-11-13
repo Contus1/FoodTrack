@@ -177,6 +177,13 @@ export const EntriesProvider = ({ children }) => {
       }
 
       console.log("Updating entry in database...");
+      
+      // Filter photo_url array to remove null/undefined/empty values
+      let cleanPhotoUrl = entryData.photo_url;
+      if (Array.isArray(entryData.photo_url)) {
+        cleanPhotoUrl = entryData.photo_url.filter(url => url && url.trim() !== '');
+      }
+      
       const { data, error } = await supabase
         .from("entries")
         .update({
@@ -185,7 +192,7 @@ export const EntriesProvider = ({ children }) => {
           tags: entryData.tags,
           notes: entryData.notes,
           location: entryData.location,
-          photo_url: entryData.photo_url,
+          photo_url: cleanPhotoUrl,
           tagged_friends: entryData.tagged_friends || [],
         })
         .eq("id", entryId)
