@@ -293,9 +293,9 @@ const FlavorJourneyMap = () => {
                   className="bg-white/50 rounded-xl p-3 border border-white/30"
                 >
                   <div className="flex items-center space-x-3">
-                    {entry.photo_url ? (
+                    {entry.photo_url && (Array.isArray(entry.photo_url) ? entry.photo_url[0] : entry.photo_url) ? (
                       <img
-                        src={entry.photo_url}
+                        src={Array.isArray(entry.photo_url) ? entry.photo_url[0] : entry.photo_url}
                         alt={entry.title}
                         className="w-12 h-12 rounded-lg object-cover"
                       />

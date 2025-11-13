@@ -121,10 +121,10 @@ const SocialFeedCard = ({ entry, onLike, onSave, onComment }) => {
       </div>
 
       {/* Image */}
-      {entry.photo_url && (
+      {entry.photo_url && (Array.isArray(entry.photo_url) ? entry.photo_url[0] : entry.photo_url) && (
         <div className="relative">
           <img
-            src={entry.photo_url}
+            src={Array.isArray(entry.photo_url) ? entry.photo_url[0] : entry.photo_url}
             alt={entry.title}
             className="w-full h-64 object-cover"
           />

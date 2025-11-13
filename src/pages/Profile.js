@@ -689,9 +689,9 @@ const Profile = () => {
                       navigate(`/add?edit=${entry.id}`);
                     }}
                   >
-                    {entry.photo_url ? (
+                    {entry.photo_url && (Array.isArray(entry.photo_url) ? entry.photo_url[0] : entry.photo_url) ? (
                       <img
-                        src={entry.photo_url}
+                        src={Array.isArray(entry.photo_url) ? entry.photo_url[0] : entry.photo_url}
                         alt={entry.title}
                         className="w-full h-full object-cover"
                         onError={(e) => {
@@ -767,9 +767,9 @@ const Profile = () => {
                       }
                     }}
                   >
-                    {entry.photo_url ? (
+                    {entry.photo_url && (Array.isArray(entry.photo_url) ? entry.photo_url[0] : entry.photo_url) ? (
                       <img
-                        src={entry.photo_url}
+                        src={Array.isArray(entry.photo_url) ? entry.photo_url[0] : entry.photo_url}
                         alt={entry.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                       />

@@ -280,9 +280,9 @@ const SimpleMap = ({ entries = [] }) => {
           >
             <Popup maxWidth={280} className="custom-popup">
               <div className="p-2">
-                {entry.photo_url && (
+                {entry.photo_url && (Array.isArray(entry.photo_url) ? entry.photo_url[0] : entry.photo_url) && (
                   <img
-                    src={entry.photo_url}
+                    src={Array.isArray(entry.photo_url) ? entry.photo_url[0] : entry.photo_url}
                     alt={entry.title}
                     className="w-full h-32 object-cover rounded-lg mb-2"
                   />
