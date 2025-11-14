@@ -1,11 +1,11 @@
 // Supabase Edge Function to analyze food images using Google Gemini API
-// Using gemini-1.5-flash (stable, best free-tier quota, production-ready)
 
 // @deno-types="https://deno.land/std@0.168.0/http/server.ts"
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+const GEMINI_API_URL =
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
 
 // Your tag categories from AddEntry.js
 const TAG_CATEGORIES = {
@@ -112,6 +112,7 @@ Rules:
       },
       body: JSON.stringify({
         contents: [{
+          role: "user",
           parts: [
             { text: prompt },
             {
@@ -122,12 +123,13 @@ Rules:
             }
           ]
         }],
-        generationConfig: {
-          temperature: 0.4,
-          topK: 32,
-          topP: 1,
-          maxOutputTokens: 500,
+        generation_config: {
+        temperature: 0.4,
+        top_k: 32,
+        top_p: 1,
+        max_output_tokens: 500,
         }
+
       })
     });
 

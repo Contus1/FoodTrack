@@ -2,6 +2,10 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+const supabaseFunctionsUrl =
+  supabaseUrl && supabaseUrl.includes(".supabase.co")
+    ? supabaseUrl.replace(".supabase.co", ".functions.supabase.co")
+    : null;
 
 // Create a mock client for development when Supabase is not configured
 const mockSupabase = {
@@ -71,7 +75,7 @@ if (
   supabase = mockSupabase;
 } else {
   console.log("✅ Supabase client initialized with URL:", supabaseUrl);
-  supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  const clientOptions = {
     db: {
       schema: "public",
     },
@@ -84,7 +88,21 @@ if (
         eventsPerSecond: 10,
       },
     },
-  });
+  };
+
+  if (supabaseFunctionsUrl) {
+    console.log(
+      "✅ Supabase functions endpoint configured:",
+      supabaseFunctionsUrl,
+    );
+    clientOptions.functions = { url: supabaseFunctionsUrl };
+  } else {
+    console.warn(
+      "⚠️ Could not derive Supabase functions endpoint. Falling back to default configuration.",
+    );
+  }
+
+  supabase = createClient(supabaseUrl, supabaseAnonKey, clientOptions);
 
   // Test the connection
   supabase
