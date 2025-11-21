@@ -3,11 +3,11 @@
 A sophisticated social media platform for food enthusiasts to document, share, and discover culinary experiences with friends. Built with React, Tailwind CSS, and Supabase.
 
 **✨ Now featuring the Liquid Glass design system** - A refined iOS 26-inspired aesthetic with subtle translucency, depth, and luminous surfaces. 
-**🤖 NEW: AI-Powered Food Recognition** - Automatic dish name and tag detection using Google Gemini AI (completely free!). Just upload a photo and let AI do the work!
+**🤖 NEW: AI-Powered Food Recognition** - Automatic dish name and tag detection using Google Gemini AI. 
 
 ## ✨ Revolutionary Features
 
-### 🤖 AI-Powered Food Recognition ⚡ NEW!
+### 🤖 AI-Powered Food Recognition 
 
 - **Automatic Dish Detection**: Upload a photo and AI identifies the dish name
 - **Smart Tag Generation**: AI suggests 5-8 relevant tags from your categories

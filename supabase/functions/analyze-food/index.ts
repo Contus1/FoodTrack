@@ -4,8 +4,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-const GEMINI_API_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
+const GEMINI_MODEL = "gemini-2.5-flash";
 
 // Your tag categories from AddEntry.js
 const TAG_CATEGORIES = {
@@ -105,14 +104,15 @@ Rules:
 - No explanations, just the JSON object`;
 
     // Call Gemini API
-    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+    
+    const response = await fetch(geminiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         contents: [{
-          role: "user",
           parts: [
             { text: prompt },
             {
@@ -123,13 +123,10 @@ Rules:
             }
           ]
         }],
-        generation_config: {
-        temperature: 0.4,
-        top_k: 32,
-        top_p: 1,
-        max_output_tokens: 500,
+        generationConfig: {
+          temperature: 0.4,
+          maxOutputTokens: 1000,
         }
-
       })
     });
 
@@ -165,7 +162,19 @@ Rules:
     let result;
     try {
       // Remove markdown code blocks if present
-      const cleanedText = generatedText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      let cleanedText = generatedText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      
+      // If JSON is incomplete, try to fix common issues
+      if (!cleanedText.endsWith('}')) {
+        // Try to find the last complete tag and close the JSON
+        const lastCompleteTag = cleanedText.lastIndexOf('",');
+        if (lastCompleteTag > 0) {
+          cleanedText = cleanedText.substring(0, lastCompleteTag + 1) + '\n  ]\n}';
+        } else {
+          cleanedText += ']\n}';
+        }
+      }
+      
       result = JSON.parse(cleanedText);
     } catch (parseError) {
       console.error("Failed to parse Gemini response:", generatedText);
