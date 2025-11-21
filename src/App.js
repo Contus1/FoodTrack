@@ -14,6 +14,7 @@ import AuthPage from "./pages/AuthPage";
 import SetupPage from "./components/SetupPage";
 import NotificationPrompt from "./components/NotificationPrompt";
 import NotificationToast from "./components/NotificationToast";
+import LoadingSpinner from "./components/LoadingSpinner";
 
 // Check if Supabase is configured
 const isSupabaseConfigured = () => {
@@ -36,7 +37,7 @@ const AppContent = () => {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-2 border-black border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <LoadingSpinner size="xl" className="mx-auto mb-4" />
           <p className="text-black font-light">Loading...</p>
         </div>
       </div>

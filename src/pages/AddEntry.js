@@ -6,6 +6,7 @@ import BottomNavigation from "../components/BottomNavigation";
 import StarRating from "../components/StarRating";
 import LocationAutocomplete from "../components/LocationAutocomplete";
 import DishAutocomplete from "../components/DishAutocomplete";
+import LoadingSpinner from "../components/LoadingSpinner";
 import { compressImage, shouldCompress } from "../utils/imageOptimization";
 import { getOrCreateDish } from "../utils/dishManager";
 import supabase from "../utils/supabaseClient";
@@ -582,7 +583,7 @@ const AddEntry = () => {
                           />
                         )}
                         {compressing ? (
-                          <div className="w-6 h-6 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                          <LoadingSpinner size="md" />
                         ) : (
                           <div className="text-center p-2">
                             <svg
@@ -633,10 +634,7 @@ const AddEntry = () => {
               >
                 {aiAnalyzing ? (
                   <>
-                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                    <LoadingSpinner size="sm" />
                     <span>Analyzing...</span>
                   </>
                 ) : (

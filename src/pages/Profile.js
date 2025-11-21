@@ -4,6 +4,7 @@ import { useSocial } from "../context/SocialContext";
 import { useNavigate, useParams } from "react-router-dom";
 import supabase from "../utils/supabaseClient";
 import BottomNavigation from "../components/BottomNavigation";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 const ProfileHeader = ({
   profile,
